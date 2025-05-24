@@ -4,5 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db": "node db.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "postgres": "^3.4.7"
   }
 }
