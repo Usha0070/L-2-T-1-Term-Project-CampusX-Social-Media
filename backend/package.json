@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "db": "node db.js"
+    "database": "nodemon database.js",
+    "server": "nodemon server.js"
   },
   "dependencies": {
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "nodemon": "^3.1.10",
     "postgres": "^3.4.7"
   }
 }

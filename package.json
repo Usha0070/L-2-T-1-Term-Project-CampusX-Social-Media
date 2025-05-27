@@ -6,6 +6,7 @@
     "build": "npm --prefix frontend run build",
     "preview": "npm --prefix frontend run preview",
     
-    "db": "npm --prefix backend run db"
+    "db": "npm --prefix backend run database",
+    "server": "npm --prefix backend run server"
   }
 }

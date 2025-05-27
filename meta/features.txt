@@ -1,0 +1,74 @@
+1. User:
+    - Sign up:
+        - email
+        - phone
+        - password
+        - name (first name, last name, nickname)
+        - address
+        - date of birth
+        - gender
+
+    - log in:
+        - email/phone, password
+
+    - profile:
+        - profile picture
+        - cover photo
+        - bio
+        - posts
+        - friend list
+        - pinned posts
+
+    - settings
+        - who can see post/friends
+        - change password
+        - deactivate/delete
+        - activity log	
+
+2. Feed:
+    - posts from friends, (pages, groups, self), recents first
+    - updates (real time)
+    - watch later
+    - hide post
+
+3. Posts:
+    - create / edit / delete
+    - text
+    - picture (1 or many)
+    - like
+    - share
+    - comment:
+        - reply to comment
+    - tagging
+
+4. Friends:
+    - send/receive/cancel friend request
+    - accept/decline request
+    - block/unfollow/unfriend
+    - friend suggestions
+
+5. Page/Groups:
+    - create (private/public)
+    - join
+    - admin/moderator
+
+6. Notifications:
+    - real time notification
+    - notification settings
+
+7. Chat:
+    - one on one
+    - pictures/media
+    - group chat
+    - online indicator
+    - pinned message
+
+8. Search:
+    - search user, page, group, post
+    - filter
+
+9. Admin:
+    - ban/unbar user, page, group
+    - review reports
+    - maintenace mode 
+    - sessions 

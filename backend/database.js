@@ -9,10 +9,19 @@ const sql = postgres({
     password: process.env.DB_PASS,
 })
 
-async function getActor(id) {
-    const actor = await sql`SELECT * FROM actor WHERE actor_id = ${ id };`
-    return actor[0];
+async function getActors() {
+    const actors = await sql`SELECT * FROM actor`
+    return actors
 }
 
-var actor = await getActor(1);
-console.log(actor)
+async function getActor(id) {
+    const actor = await sql`SELECT * FROM actor WHERE actor_id = ${ id };`
+    return actor[0]
+}
+
+export { getActor, getActors }
+
+// var actors = await getActors();
+// console.log(actors)
+// var actor = await getActor(1)
+// console.log(actor)
