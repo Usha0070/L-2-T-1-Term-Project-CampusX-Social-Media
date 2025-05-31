@@ -8,9 +8,9 @@ CREATE TYPE marketplace_status AS ENUM ('Available', 'Sold');
 CREATE TYPE tuition_status AS ENUM ('Available', 'Booked');
 CREATE TYPE group_post_status AS ENUM ('Pending', 'Accepted');
 CREATE TYPE friendship_status AS ENUM ('Pending', 'Accepted');
-CREATE TYPE ref_type_enum AS ENUM ('post', 'comment', 'profile');
 CREATE TYPE item_condition_type AS ENUM ('New', 'Used');
 CREATE TYPE post_visibility_type AS ENUM ('public', 'private', 'friends');
+CREATE TYPE notification_type AS ENUM('post_like', 'post_comment', 'post_share', 'post_tag', 'friend_req_received', 'friend_req_accepted');
 
 -- CITY
 CREATE TABLE city (
@@ -54,10 +54,10 @@ CREATE TABLE media (
 -- USER_PROFILE
 CREATE TABLE user_profile (
     user_id INT PRIMARY KEY REFERENCES "user"(user_id) ON DELETE CASCADE,
-    bio VARCHAR(1000),
+    bio VARCHAR(200),
     profile_pic INT UNIQUE REFERENCES media(media_id),
     cover_photo INT UNIQUE REFERENCES media(media_id),
-    about VARCHAR(2000)
+    about VARCHAR(800)
 );
 
 -- POST
@@ -73,7 +73,7 @@ CREATE TABLE post (
 
 -- POST_TAG
 CREATE TABLE post_tag (
-    post_id INT UNIQUE REFERENCES post(post_id),
+    post_id INT REFERENCES post(post_id),
     user_id INT REFERENCES "user"(user_id),
     PRIMARY KEY (post_id, user_id)
 );
@@ -189,7 +189,8 @@ CREATE TABLE friendship (
     status friendship_status NOT NULL,
     action_user_id INT REFERENCES "user"(user_id) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (user_id, friend_id)
+    PRIMARY KEY (user_id, friend_id),
+    CHECK (user_id < friend_id)
 );
 
 -- FOLLOW
@@ -214,7 +215,8 @@ CREATE TABLE chat (
     user1_id INT REFERENCES "user"(user_id) NOT NULL,
     user2_id INT REFERENCES "user"(user_id) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    last_message_at TIMESTAMP
+    last_message_at TIMESTAMP,
+    CHECK (user1_id < user2_id)
 );
 
 -- MESSAGE
@@ -227,34 +229,13 @@ CREATE TABLE message (
     is_read BOOLEAN DEFAULT FALSE
 );
 
--- NOTIFICATION-TYPE
-CREATE TABLE notification_type (
-    type_id SERIAL PRIMARY KEY,
-    type_name VARCHAR(50) NOT NULL UNIQUE,
-    description VARCHAR(255),
-    default_icon INT REFERENCES media(media_id)
-);
-
 -- NOTIFICATION
 CREATE TABLE notification (
     notification_id SERIAL PRIMARY KEY,
+    type notification_type NOT NULL,
     recipient_id INT REFERENCES "user"(user_id) NOT NULL,
     sender_id INT REFERENCES "user"(user_id),
-    type_id INT NOT NULL REFERENCES notification_type(type_id),
-    entity_id INT,
-    entity_type VARCHAR(50),
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP,
     metadata JSON
-);
-
--- NOTIFICATION-PREFERENCE
-CREATE TABLE notification_preference (
-    user_id INT REFERENCES "user"(user_id),
-    type_id INT REFERENCES notification_type(type_id) NOT NULL,
-    receive_email BOOLEAN DEFAULT TRUE,
-    receive_in_app BOOLEAN DEFAULT TRUE,
-    mute_until TIMESTAMP,
-    PRIMARY KEY (user_id, type_id)
 );
