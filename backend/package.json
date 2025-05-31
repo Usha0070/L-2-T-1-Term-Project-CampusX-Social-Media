@@ -8,9 +8,13 @@
     "server": "nodemon server.js"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "nodemon": "^3.1.10",
+    "jsonwebtoken": "^9.0.2",
     "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }

@@ -9,19 +9,16 @@ const sql = postgres({
     password: process.env.DB_PASS,
 })
 
-async function getActors() {
-    const actors = await sql`SELECT * FROM actor`
-    return actors
+export async function getPostsById(userId) {
+    return await sql`SELECT * FROM post WHERE author_id = ${ userId }`
 }
 
-async function getActor(id) {
-    const actor = await sql`SELECT * FROM actor WHERE actor_id = ${ id };`
-    return actor[0]
+export async function getHashedPasswordByStudentId(student_id) {
+    const [row] = await sql`SELECT hashed_password FROM "user" WHERE student_id = ${ student_id }`
+    return row?.hashed_password || null
 }
 
-export { getActor, getActors }
-
-// var actors = await getActors();
-// console.log(actors)
-// var actor = await getActor(1)
-// console.log(actor)
+export async function getUserIdByStudentId(student_id) {
+    const [row] = await sql`SELECT user_id FROM "user" WHERE student_id = ${ student_id }` 
+    return row?.user_id || null
+}
