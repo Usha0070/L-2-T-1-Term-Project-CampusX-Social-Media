@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "database": "nodemon database.js",
-    "server": "nodemon server.js"
+    "server": "nodemon app.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "postgres": "^3.4.7"
+    "postgres": "^3.4.7",
+    "zod": "^3.25.46"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

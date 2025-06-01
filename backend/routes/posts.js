@@ -1,6 +1,6 @@
 import express from "express";
-import * as db from "../database.js";
-import { authenticate } from "../auth.js";
+import * as db from "../db/index.js";
+import { authenticate } from "./auth.js";
 
 const router = express.Router();
 
