@@ -4,13 +4,13 @@ import { authenticate } from "./auth.js";
 
 const router = express.Router();
 
-router.get("/", authenticate, async (req, res) => {
+router.get("/:id", authenticate, async (req, res, next) => {
   try {
-    const user_id = req.user.user_id;
-    const posts = await db.getPostsById(user_id);
-    res.status(200).json(posts);
+    const post_id = req.params.id;
+    const post = await db.getPostByPostId(post_id);
+    res.status(200).json(post);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch posts" });
+    next(err);
   }
 });
 

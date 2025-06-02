@@ -9,10 +9,10 @@ def gen_img(ind, url):
     # url = f"https://picsum.photos/512/{choices(heights,weights)[0]}"
     res = requests.get(url)
     img = res.content
-    name = f"{output_dir}/group-cover-{ind}.jpg"
+    name = f"{output_dir}/group-profile-{ind}.jpg"
     # name = "photo.jpg"
     with open(name, "wb") as f:
         f.write(img)
     return name
 
-# print(gen_img(3, "https://picsum.photos/950/600"))
+print(gen_img(5, "https://picsum.photos/300/300"))

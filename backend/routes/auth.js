@@ -8,7 +8,7 @@ import * as schema from "../schemas/index.js";
 
 const router = express.Router();
 
-router.post("/register", async (req, res) => {
+router.post("/register", async (req, res, next) => {
   try {
     const body = schema.RegisterSchema.parse(req.body);
     const hashedPassword = await bcrypt.hash(body.password, 10);
@@ -16,8 +16,8 @@ router.post("/register", async (req, res) => {
 
     if (result.success) {
       const user = { user_id: result.user_id };
-      const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN);
-      res.status(201).json({ accessToken });
+      const accessToken = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
+      res.status(201).json({ user_id: result.user_id, accessToken });
     } else {
       res.status(400).json({ error: result.error || "User creation failed" });
     }
@@ -25,36 +25,34 @@ router.post("/register", async (req, res) => {
     if (err instanceof z.ZodError) {
       res.status(400).json({ error: err.errors });
     } else {
-      res.status(500).json({ error: "Server error" });
+      next(err);
     }
-    console.error("Register error:", err);
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", async (req, res, next) => {
   try {
     const body = schema.LoginSchema.parse(req.body);
     const hashed = await db.getHashedPasswordByStudentId(body.student_id);
     if (!hashed) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "Access denied" });
     }
     const result = await bcrypt.compare(body.password, hashed);
     if (!result) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "Access denied" });
     }
 
     const user_id = await db.getUserIdByStudentId(body.student_id);
     const user = { user_id };
 
-    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN);
-    res.status(200).json({ accessToken });
+    const accessToken = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
+    res.status(200).json({ user_id, accessToken });
   } catch (err) {
     if (err instanceof z.ZodError) {
       res.status(400).json({ error: err.errors });
     } else {
-      res.status(500).json({ error: "Server error" });
+      next(err);
     }
-    console.log("Login error: ", err);
   }
 });
 
@@ -69,7 +67,7 @@ export function authenticate(req, res, next) {
     return res.status(401).json({ error: "Token missing" });
   }
 
-  jwt.verify(token, process.env.ACCESS_TOKEN, (err, user) => {
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: "Invalid token" });
     req.user = user;
     next();

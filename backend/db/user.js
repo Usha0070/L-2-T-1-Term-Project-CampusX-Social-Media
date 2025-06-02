@@ -25,6 +25,17 @@ export async function getUserByUserId(user_id) {
   return user;
 }
 
+export async function getUserProfileByUserId(user_id) {
+  const [profile] = await sql`
+    SELECT bio, about, m1.link profile_pic, m2.link cover_photo
+    FROM user_profile
+    JOIN media m1 ON profile_pic = m1.media_id
+    JOIN media m2 ON cover_photo = m2.media_id
+    WHERE user_id = ${user_id}
+  `;
+  return profile;
+}
+
 export async function createUser(user) {
   try {
     const result = await sql.begin(async (tx) => {
@@ -61,6 +72,16 @@ export async function createUser(user) {
           ${user.hashed_password}, ${user.date_of_birth}, ${user.gender}, ${address_id}
         )
         RETURNING user_id
+      `;
+
+      await tx`
+        INSERT INTO user_profile (user_id)
+        VALUES (${userRow.user_id})
+      `;
+
+      await tx`
+        INSERT INTO group_member (group_id, user_id)
+        VALUES (4, ${userRow.user_id}), (5, ${userRow.user_id})
       `;
 
       return { success: true, user_id: userRow.user_id };
