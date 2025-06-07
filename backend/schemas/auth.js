@@ -11,7 +11,21 @@ export const RegisterSchema = z.object({
   nickname: z.string().optional(),
   student_id: z.string(),
   batch: z.number(),
-  department: z.enum(["CSE", "EEE", "ME", "CE", "BME", "ChE", "MME", "IPE", "NCE", "NAME", "WRE", "ARC", "URP"]),
+  department: z.enum([
+    "CSE",
+    "EEE",
+    "ME",
+    "CE",
+    "BME",
+    "ChE",
+    "MME",
+    "IPE",
+    "NCE",
+    "NAME",
+    "WRE",
+    "ARC",
+    "URP",
+  ]),
   email: z.string().email(),
   phone: z.string(),
   password: z.string(),
@@ -23,4 +37,86 @@ export const RegisterSchema = z.object({
   hall: z.enum(["AUH", "SWH", "SBH", "TH", "RH", "NH", "ShH", "SoH"]),
   room_no: z.string().optional(),
   city_name: z.string(),
+});
+
+export const PartialRegisterSchema = RegisterSchema.partial();
+
+export const ProfileSchema = z.object({
+  bio: z.string().optional(),
+  about: z.string().optional(),
+});
+
+export const FriendSchema = z.object({
+  type: z.enum(["req_sent", "req_accept", "req_delete", "unfriend"]),
+  friend_id: z.number(),
+});
+
+export const FollowSchema = z.object({
+  type: z.enum(["add", "delete"]),
+  followed_id: z.number(),
+});
+
+export const BlockSchema = z.object({
+  type: z.enum(["add", "delete"]),
+  blocked_id: z.number(),
+});
+
+const MarketSchema = z.object({
+  category: z.string().optional(),
+  price: z.coerce.number(),
+  status: z.enum(["Available", "Sold"]),
+  item_condition: z.enum(["New", "Used"]),
+});
+
+const TuitionSchema = z.object({
+  class: z.string(),
+  num_students: z.coerce.number(),
+  location: z.string(),
+  remunation: z.coerce.number(),
+  status: z.enum(["Available", "Booked"]),
+  preferred_gender: z.enum(["Male", "Female"]).optional(),
+  subjects: z.array(z.string()),
+});
+
+export const PostSchema = z.object({
+  content: z.string().max(5000).optional(),
+  visibility: z.enum(["public", "private", "friends"]),
+  shared_post_id: z.union([z.string(), z.number()]).transform(Number).optional().nullable(),
+  media_contexts: z.array(z.string()).optional(),
+  tagged_user_ids: z.array(z.coerce.number()).optional(),
+  market: z.preprocess((val) => JSON.parse(val), MarketSchema).optional(),
+  tuition: z.preprocess((val) => JSON.parse(val), TuitionSchema).optional(),
+  // media: [media]
+});
+
+export const CommentSchema = z.object({
+  content: z.string(),
+  parent_comment_id: z.coerce.number().optional(),
+});
+
+export const GroupSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  is_public: z.coerce.boolean().optional(),
+});
+
+export const ModSchema = z.object({
+  user_id: z.number(),
+});
+
+export const GroupPostSchema = z.object({
+  post_id: z.number(),
+});
+
+export const GroupPostSchema2 = z.object({
+  status: z.enum(["Pending", "Accepted"]),
+});
+
+export const ChatSchema = z.object({
+  user2_id: z.number(),
+});
+
+export const MessageSchema = z.object({
+  content: z.string(),
+  is_read: z.boolean().optional(),
 });

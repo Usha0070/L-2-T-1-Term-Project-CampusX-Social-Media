@@ -8,10 +8,14 @@ import * as schema from "../schemas/index.js";
 
 const router = express.Router();
 
+export async function generateHashedPassword(password) {
+  return await bcrypt.hash(password, 10);
+}
+
 router.post("/register", async (req, res, next) => {
   try {
     const body = schema.RegisterSchema.parse(req.body);
-    const hashedPassword = await bcrypt.hash(body.password, 10);
+    const hashedPassword = await generateHashedPassword(body.password);
     const result = await db.createUser({ ...body, hashed_password: hashedPassword });
 
     if (result.success) {
@@ -45,7 +49,7 @@ router.post("/login", async (req, res, next) => {
     const user_id = await db.getUserIdByStudentId(body.student_id);
     const user = { user_id };
 
-    const accessToken = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const accessToken = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "30d" }); // change later
     res.status(200).json({ user_id, accessToken });
   } catch (err) {
     if (err instanceof z.ZodError) {

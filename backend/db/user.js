@@ -1,4 +1,5 @@
 import sql from "./sql.js";
+import { createMedia } from "./media.js";
 
 export async function getHashedPasswordByStudentId(student_id) {
   const [row] = await sql`SELECT hashed_password FROM "user" WHERE student_id = ${student_id}`;
@@ -29,8 +30,8 @@ export async function getUserProfileByUserId(user_id) {
   const [profile] = await sql`
     SELECT bio, about, m1.link profile_pic, m2.link cover_photo
     FROM user_profile
-    JOIN media m1 ON profile_pic = m1.media_id
-    JOIN media m2 ON cover_photo = m2.media_id
+    LEFT JOIN media m1 ON profile_pic = m1.media_id
+    LEFT JOIN media m2 ON cover_photo = m2.media_id
     WHERE user_id = ${user_id}
   `;
   return profile;
@@ -43,34 +44,39 @@ export async function createUser(user) {
         SELECT city_id FROM city WHERE name ILIKE ${user.city_name}
       `;
       const city_id = cityRow?.city_id;
-      if (!city_id) {
-        throw new Error("City name not found");
-      }
+      if (!city_id) throw new Error("City name not found");
+
+      const addressData = {
+        ...(user.residence_type !== undefined && { type: user.residence_type }),
+        ...(user.hall !== undefined && { hall: user.hall }),
+        ...(user.room_no !== undefined && { room_no: user.room_no }),
+        city_id,
+      };
 
       const [addressRow] = await tx`
-        INSERT INTO address (
-          type, hall, room_no, city_id
-        )
-        VALUES (
-          ${user.residence_type}, ${user.hall}, ${user.room_no}, ${city_id}
-        )
+        INSERT INTO address ${sql(addressData)}
         RETURNING address_id
       `;
       const address_id = addressRow?.address_id;
-      if (!address_id) {
-        throw new Error("Failed to insert address");
-      }
+      if (!address_id) throw new Error("Failed to insert address");
+
+      const userData = {
+        ...(user.first_name !== undefined && { first_name: user.first_name }),
+        ...(user.last_name !== undefined && { last_name: user.last_name }),
+        ...(user.nickname !== undefined && { nickname: user.nickname }),
+        ...(user.student_id !== undefined && { student_id: user.student_id }),
+        ...(user.batch !== undefined && { batch: user.batch }),
+        ...(user.department !== undefined && { department: user.department }),
+        ...(user.email !== undefined && { email: user.email }),
+        ...(user.phone !== undefined && { phone: user.phone }),
+        ...(user.hashed_password !== undefined && { hashed_password: user.hashed_password }),
+        ...(user.date_of_birth !== undefined && { date_of_birth: user.date_of_birth }),
+        ...(user.gender !== undefined && { gender: user.gender }),
+        address_id,
+      };
 
       const [userRow] = await tx`
-        INSERT INTO "user" (
-          first_name, last_name, nickname, student_id, batch, department,
-          email, phone, hashed_password, date_of_birth, gender, address_id
-        )
-        VALUES (
-          ${user.first_name}, ${user.last_name}, ${user.nickname}, ${user.student_id},
-          ${user.batch}, ${user.department}, ${user.email}, ${user.phone},
-          ${user.hashed_password}, ${user.date_of_birth}, ${user.gender}, ${address_id}
-        )
+        INSERT INTO "user" ${sql(userData)}
         RETURNING user_id
       `;
 
@@ -91,5 +97,106 @@ export async function createUser(user) {
   } catch (err) {
     console.error("Error in createUser:", err.message);
     return { error: err.message || "Unknown database error" };
+  }
+}
+
+export async function updateUser(user) {
+  try {
+    const result = await sql.begin(async (tx) => {
+      let address_id, city_id;
+
+      const hasAddressUpdate = ["residence_type", "hall", "room_no", "city_name"].some(
+        (key) => user[key] !== undefined
+      );
+
+      if (hasAddressUpdate) {
+        const [addressRow] = await tx`
+          SELECT address_id FROM "user" WHERE user_id = ${user.user_id}
+        `;
+        address_id = addressRow?.address_id;
+
+        if (user.city_name !== undefined) {
+          const [cityRow] = await tx`
+            SELECT city_id FROM city WHERE name ILIKE ${user.city_name}
+          `;
+          city_id = cityRow?.city_id;
+          if (!city_id) throw new Error("City name not found");
+        }
+
+        const addressUpdates = {
+          ...(user.residence_type !== undefined && { type: user.residence_type }),
+          ...(user.hall !== undefined && { hall: user.hall }),
+          ...(user.room_no !== undefined && { room_no: user.room_no }),
+          ...(city_id !== undefined && { city_id }),
+        };
+
+        if (Object.keys(addressUpdates).length > 0) {
+          await tx`
+            UPDATE address
+            SET ${sql(addressUpdates)}
+            WHERE address_id = ${address_id}
+          `;
+        }
+      }
+
+      const userUpdates = {
+        ...(user.first_name !== undefined && { first_name: user.first_name }),
+        ...(user.last_name !== undefined && { last_name: user.last_name }),
+        ...(user.nickname !== undefined && { nickname: user.nickname }),
+        ...(user.student_id !== undefined && { student_id: user.student_id }),
+        ...(user.batch !== undefined && { batch: user.batch }),
+        ...(user.department !== undefined && { department: user.department }),
+        ...(user.email !== undefined && { email: user.email }),
+        ...(user.phone !== undefined && { phone: user.phone }),
+        ...(user.hashed_password !== undefined && { hashed_password: user.hashed_password }),
+        ...(user.date_of_birth !== undefined && { date_of_birth: user.date_of_birth }),
+        ...(user.gender !== undefined && { gender: user.gender }),
+      };
+
+      if (Object.keys(userUpdates).length > 0) {
+        await tx`
+          UPDATE "user"
+          SET ${sql(userUpdates)}
+          WHERE user_id = ${user.user_id}
+        `;
+      }
+      return { success: true };
+    });
+    return result;
+  } catch (err) {
+    console.error("Error in updateUser:", err.message);
+    return { error: err.message || "Unknown database error" };
+  }
+}
+
+export async function updateUserProfile(profile) {
+  try {
+    let profile_pic, cover_photo;
+    if (profile.profile_pic !== undefined) {
+      profile_pic = await createMedia({ link: profile.profile_pic, type: "image" });
+    }
+    if (profile.cover_photo !== undefined) {
+      cover_photo = await createMedia({ link: profile.cover_photo, type: "image" });
+    }
+
+    const updates = {
+      ...(profile.bio !== undefined && { bio: profile.bio }),
+      ...(profile.about !== undefined && { about: profile.about }),
+      ...(profile_pic && { profile_pic: profile_pic }),
+      ...(cover_photo && { cover_photo: cover_photo }),
+    };
+
+    if (Object.keys(updates).length > 0) {
+      await sql`
+        UPDATE user_profile
+        SET ${sql(updates)}
+        WHERE user_id = ${profile.user_id}
+      `;
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("Error in updateUserProfile:", err.message);
+    return { error: err.message || "Unknown error" };
   }
 }

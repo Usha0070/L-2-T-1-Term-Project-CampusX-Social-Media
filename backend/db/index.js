@@ -4,3 +4,4 @@ export * from "./group.js";
 export * from "./friend.js";
 export * from "./chat.js";
 export * from "./notification.js";
+export * from "./media.js";

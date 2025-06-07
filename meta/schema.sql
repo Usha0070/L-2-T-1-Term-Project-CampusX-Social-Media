@@ -118,7 +118,7 @@ CREATE TABLE marketplace_post (
 -- LOCATION
 CREATE TABLE location (
     location_id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) UNIQUE NOT NULL
 );
 
 -- TUITION_POST
@@ -135,7 +135,7 @@ CREATE TABLE tuition_post (
 -- SUBJECT
 CREATE TABLE subject (
     subject_id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) UNIQUE NOT NULL
 );
 
 -- TUITION_SUBJECT
@@ -150,8 +150,8 @@ CREATE TABLE "group" (
     group_id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description VARCHAR(1000),
-    profile_pic INT UNIQUE REFERENCES media(media_id),
-    cover_photo INT UNIQUE REFERENCES media(media_id),
+    profile_pic INT REFERENCES media(media_id),
+    cover_photo INT REFERENCES media(media_id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     creator_id INT REFERENCES "user"(user_id) NOT NULL,
     admin_id INT REFERENCES "user"(user_id) NOT NULL,
