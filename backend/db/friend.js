@@ -1,4 +1,5 @@
 import sql from "./sql.js";
+import { createNotification } from "./notification.js";
 
 export async function getFriendsByUserId(user_id) {
   const [friends] = await sql`
@@ -98,10 +99,16 @@ export async function updateFriendship(friendship) {
 
       case "req_accept":
         await acceptFriend(friendship.user_id, friendship.friend_id, friendship.user_id);
+        await createNotification(friendship.friend_id, friendship.user_id, "friend_req_accepted", {
+          user_id: friendship.user_id,
+        });
         break;
 
       case "req_sent":
         await createFriend(friendship.user_id, friendship.friend_id, friendship.user_id);
+        await createNotification(friendship.friend_id, friendship.user_id, "friend_req_received", {
+          user_id: friendship.user_id,
+        });
         break;
     }
     return { success: true };
