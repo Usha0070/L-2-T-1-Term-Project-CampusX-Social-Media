@@ -78,7 +78,15 @@ export async function validateUserGroup(user_id, group_id) {
 }
 
 export async function validateUserGroupMod(user_id, group_id) {
-  return true;
+  return true; // TODO
+}
+
+export async function validateUserGroupMember(user_id, group_id) {
+  return true; // TODO
+}
+
+export async function validateUserGroupPost(user_id, group_id, post_id) {
+  return true; // TODO
 }
 
 export async function modifyGroup(groupData) {
@@ -95,8 +103,8 @@ export async function modifyGroup(groupData) {
           ([k, _]) => k !== "profile_pic" && k !== "cover_photo" && k !== "group_id"
         )
       ),
-      ...(profile_pic !== undefined && { profile_pic }),
-      ...(cover_photo !== undefined && { cover_photo }),
+      ...(profile_pic && { profile_pic }),
+      ...(cover_photo && { cover_photo }),
     };
 
     await sql`
@@ -137,10 +145,6 @@ export async function deleteGroupMod(modData) {
   }
 }
 
-export async function validateUserGroupMember(user_id, group_id) {
-  return true;
-}
-
 export async function createGroupMember(memberData) {
   try {
     await sql`
@@ -165,10 +169,6 @@ export async function deleteGroupMember(memberData) {
     console.log("Error in deleteGroupMember: ", err);
     return { error: err.message };
   }
-}
-
-export async function validateUserGroupPost(user_id, group_id, post_id) {
-  return true;
 }
 
 export async function createGroupPost(postData) {

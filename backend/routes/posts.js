@@ -1,9 +1,8 @@
 import express from "express";
 import * as db from "../db/index.js";
-import { authenticate } from "./auth.js";
-import * as schema from "../schemas/index.js";
-import { upload } from "../upload.js";
-import { z } from "zod";
+import { authenticate } from "../middleware/auth.js";
+import * as schema from "../middleware/schema.js";
+import { upload } from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -35,8 +34,7 @@ router.post("/", authenticate, upload.fields([{ name: "media", maxCount: 10 }]),
     if (result.error) return res.status(400).json(result);
     res.status(201).json(result);
   } catch (err) {
-    if (err instanceof z.ZodError) res.status(400).json({ error: err.errors });
-    else next(err);
+    next(err);
   }
 });
 
@@ -61,8 +59,7 @@ router.put("/:id", authenticate, upload.fields([{ name: "media", maxCount: 10 }]
     if (result.error) return res.status(400).json(result);
     res.status(201).json(result);
   } catch (err) {
-    if (err instanceof z.ZodError) res.status(400).json({ error: err.errors });
-    else next(err);
+    next(err);
   }
 });
 
@@ -98,7 +95,6 @@ router.post("/:id/comments", authenticate, async (req, res, next) => {
     const result = await db.createPostComment(commentData);
     res.status(201).json(result);
   } catch (err) {
-    if (err instanceof z.ZodError) res.status(400).json({ error: err.errors });
     next(err);
   }
 });
@@ -117,7 +113,6 @@ router.put("/:id/comments/:cid", authenticate, async (req, res, next) => {
     if (result.error) return res.status(400).json(result);
     res.status(200).json(result);
   } catch (err) {
-    if (err instanceof z.ZodError) res.status(400).json({ error: err.errors });
     next(err);
   }
 });

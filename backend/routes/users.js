@@ -1,9 +1,9 @@
 import express from "express";
 import * as db from "../db/index.js";
-import { authenticate, generateHashedPassword } from "./auth.js";
-import { z } from "zod";
-import * as schema from "../schemas/index.js";
-import { upload } from "../upload.js";
+import { generateHashedPassword } from "./auth.js";
+import { authenticate } from "../middleware/auth.js";
+import * as schema from "../middleware/schema.js";
+import { upload } from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -19,20 +19,19 @@ router.get("/me", authenticate, async (req, res, next) => {
   }
 });
 
-router.patch("/me", authenticate, async (req, res, next) => {
+router.put("/me", authenticate, async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const body = {
       user_id,
-      ...schema.PartialRegisterSchema.parse(req.body),
+      ...schema.UserSchema.parse(req.body),
       ...(req.body.password && { hashed_password: generateHashedPassword(req.body.password) }),
     };
     const result = await db.updateUser(body);
     if (result.success) res.status(200).json(result);
     else res.status(400).json(result);
   } catch (err) {
-    if (err instanceof z.ZodError) res.status(400).json({ error: err.errors });
-    else next(err);
+    next(err);
   }
 });
 
@@ -46,7 +45,7 @@ router.get("/me/profile", authenticate, async (req, res, next) => {
   }
 });
 
-router.patch(
+router.put(
   "/me/profile",
   authenticate,
   upload.fields([
@@ -66,7 +65,6 @@ router.patch(
       if (result.error) return res.status(400).json({ error: result.error });
       res.status(200).json({ success: true });
     } catch (err) {
-      if (err instanceof z.ZodError) res.status(400).json({ error: err.errors });
       next(err);
     }
   }
@@ -92,15 +90,14 @@ router.get("/me/friends", authenticate, async (req, res, next) => {
   }
 });
 
-router.patch("/me/friends", authenticate, async (req, res, next) => {
+router.put("/me/friends", authenticate, async (req, res, next) => {
   try {
     const body = schema.FriendSchema.parse(req.body);
     const result = await db.updateFriendship({ ...body, user_id: req.user.user_id });
     if (result.error) return res.status(400).json(result);
     res.status(200).json(result);
   } catch (err) {
-    if (err instanceof z.ZodError) res.status(400).json({ error: err.errors });
-    else next(err);
+    next(err);
   }
 });
 
@@ -114,7 +111,7 @@ router.get("/me/follows", authenticate, async (req, res, next) => {
   }
 });
 
-router.patch("/me/follows", authenticate, async (req, res, next) => {
+router.put("/me/follows", authenticate, async (req, res, next) => {
   try {
     const body = schema.FollowSchema.parse(req.body);
     const result = await db.updateFollow({ ...body, user_id: req.user.user_id });
@@ -135,22 +132,12 @@ router.get("/me/blocks", authenticate, async (req, res, next) => {
   }
 });
 
-router.patch("/me/blocks", authenticate, async (req, res, next) => {
+router.put("/me/blocks", authenticate, async (req, res, next) => {
   try {
     const body = schema.BlockSchema.parse(req.body);
     const result = await db.updateBlock({ ...body, user_id: req.user.user_id });
     if (result.error) return res.status(400).json({ error: result.error });
     res.status(200).json(result);
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.get("/me/blockers", authenticate, async (req, res, next) => {
-  try {
-    const user_id = req.user.user_id;
-    const blockers = await db.getBlockersByUserId(user_id);
-    res.status(200).json(blockers);
   } catch (err) {
     next(err);
   }

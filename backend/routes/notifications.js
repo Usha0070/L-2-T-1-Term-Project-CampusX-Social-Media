@@ -1,6 +1,6 @@
 import express from "express";
 import * as db from "../db/index.js";
-import { authenticate } from "./auth.js";
+import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -13,8 +13,7 @@ router.get("/", authenticate, async (req, res) => {
     const notifications = await db.getNotificationsByUserId(user_id, limit, offset);
     res.status(200).json(notifications);
   } catch (err) {
-    console.log("Error in GET /notifications: ", err);
-    res.status(500).json({ error: "Failed to fetch notifications" });
+    next(err);
   }
 });
 

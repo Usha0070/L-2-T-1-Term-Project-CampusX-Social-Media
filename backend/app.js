@@ -1,5 +1,7 @@
 import "dotenv/config";
 import express from "express";
+import z from "zod";
+
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import postsRouter from "./routes/posts.js";
@@ -20,9 +22,11 @@ app.use("/notifications", notificationsRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({
-    error: err.message || "Internal Server Error",
-  });
+  if (err instanceof z.ZodError) res.status(err.status || 400).json({ error: err.errors });
+  else
+    res.status(err.status || 500).json({
+      error: err.message || "Internal Server Error",
+    });
 });
 
 app.use((req, res) => {

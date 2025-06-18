@@ -1,8 +1,7 @@
 import express from "express";
 import * as db from "../db/index.js";
-import { authenticate } from "./auth.js";
-import { z } from "zod";
-import * as schema from "../schemas/index.js";
+import { authenticate } from "../middleware/auth.js";
+import * as schema from "../middleware/schema.js";
 
 const router = express.Router();
 
@@ -26,7 +25,6 @@ router.post("/", authenticate, async (req, res, next) => {
     if (result.error) return res.status(200).json(result);
     res.status(400).json(result);
   } catch (err) {
-    if (err instanceof z.ZodError) return res.status(200).json({ error: err.errors });
     next(err);
   }
 });
@@ -60,7 +58,6 @@ router.post("/:id", authenticate, async (req, res, next) => {
     if (result.error) return res.status(400).json(result);
     res.status(201).json(result);
   } catch (err) {
-    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
     next(err);
   }
 });
@@ -78,7 +75,6 @@ router.put("/:id/:mid", authenticate, async (req, res, next) => {
     if (result.error) return res.status(400).json(result);
     res.status(201).json(result);
   } catch (err) {
-    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
     next(err);
   }
 });

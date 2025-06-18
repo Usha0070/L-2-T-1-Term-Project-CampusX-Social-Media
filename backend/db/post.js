@@ -135,11 +135,11 @@ export async function createPost(postData) {
   try {
     const result = await sql.begin(async (tx) => {
       const post = {
-        ...(postData.post_id != undefined && { post_id: postData.post_id }),
+        ...(postData.post_id && { post_id: postData.post_id }),
         author_id: postData.user_id,
-        ...(postData.content !== undefined && { content: postData.content }),
+        ...(postData.content && { content: postData.content }),
         visibility: postData.visibility,
-        ...(postData.shared_post_id !== undefined && { shared_post_id: postData.shared_post_id }),
+        ...(postData.shared_post_id && { shared_post_id: postData.shared_post_id }),
       };
       const [postRow] = await tx`
         INSERT INTO post ${sql(post)}

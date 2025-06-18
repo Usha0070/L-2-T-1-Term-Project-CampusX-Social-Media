@@ -8,7 +8,7 @@ export const LoginSchema = z.object({
 export const RegisterSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
-  nickname: z.string().optional(),
+  nickname: z.string().optional().nullable(),
   student_id: z.string(),
   batch: z.number(),
   department: z.enum([
@@ -39,11 +39,11 @@ export const RegisterSchema = z.object({
   city_name: z.string(),
 });
 
-export const PartialRegisterSchema = RegisterSchema.partial();
+export const UserSchema = RegisterSchema.extend({ password: RegisterSchema.shape.password.optional() });
 
 export const ProfileSchema = z.object({
-  bio: z.string().optional(),
-  about: z.string().optional(),
+  bio: z.string(),
+  about: z.string(),
 });
 
 export const FriendSchema = z.object({

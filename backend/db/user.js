@@ -47,36 +47,38 @@ export async function createUser(user) {
       if (!city_id) throw new Error("City name not found");
 
       const addressData = {
-        ...(user.residence_type !== undefined && { type: user.residence_type }),
-        ...(user.hall !== undefined && { hall: user.hall }),
-        ...(user.room_no !== undefined && { room_no: user.room_no }),
+        ...(user.residence_type && { type: user.residence_type }),
+        ...(user.hall && { hall: user.hall }),
+        ...(user.room_no && { room_no: user.room_no }),
         city_id,
       };
 
       const [addressRow] = await tx`
-        INSERT INTO address ${sql(addressData)}
+        INSERT INTO address 
+        ${sql(addressData)}
         RETURNING address_id
       `;
       const address_id = addressRow?.address_id;
       if (!address_id) throw new Error("Failed to insert address");
 
       const userData = {
-        ...(user.first_name !== undefined && { first_name: user.first_name }),
-        ...(user.last_name !== undefined && { last_name: user.last_name }),
-        ...(user.nickname !== undefined && { nickname: user.nickname }),
-        ...(user.student_id !== undefined && { student_id: user.student_id }),
-        ...(user.batch !== undefined && { batch: user.batch }),
-        ...(user.department !== undefined && { department: user.department }),
-        ...(user.email !== undefined && { email: user.email }),
-        ...(user.phone !== undefined && { phone: user.phone }),
-        ...(user.hashed_password !== undefined && { hashed_password: user.hashed_password }),
-        ...(user.date_of_birth !== undefined && { date_of_birth: user.date_of_birth }),
-        ...(user.gender !== undefined && { gender: user.gender }),
+        ...(user.first_name && { first_name: user.first_name }),
+        ...(user.last_name && { last_name: user.last_name }),
+        ...(user.nickname && { nickname: user.nickname }),
+        ...(user.student_id && { student_id: user.student_id }),
+        ...(user.batch && { batch: user.batch }),
+        ...(user.department && { department: user.department }),
+        ...(user.email && { email: user.email }),
+        ...(user.phone && { phone: user.phone }),
+        ...(user.hashed_password && { hashed_password: user.hashed_password }),
+        ...(user.date_of_birth && { date_of_birth: user.date_of_birth }),
+        ...(user.gender && { gender: user.gender }),
         address_id,
       };
 
       const [userRow] = await tx`
-        INSERT INTO "user" ${sql(userData)}
+        INSERT INTO "user" 
+        ${sql(userData)}
         RETURNING user_id
       `;
 
@@ -105,61 +107,52 @@ export async function updateUser(user) {
     const result = await sql.begin(async (tx) => {
       let address_id, city_id;
 
-      const hasAddressUpdate = ["residence_type", "hall", "room_no", "city_name"].some(
-        (key) => user[key] !== undefined
-      );
-
-      if (hasAddressUpdate) {
-        const [addressRow] = await tx`
+      const [addressRow] = await tx`
           SELECT address_id FROM "user" WHERE user_id = ${user.user_id}
         `;
-        address_id = addressRow?.address_id;
+      address_id = addressRow?.address_id;
 
-        if (user.city_name !== undefined) {
-          const [cityRow] = await tx`
+      if (user.city_name !== undefined) {
+        const [cityRow] = await tx`
             SELECT city_id FROM city WHERE name ILIKE ${user.city_name}
           `;
-          city_id = cityRow?.city_id;
-          if (!city_id) throw new Error("City name not found");
-        }
-
-        const addressUpdates = {
-          ...(user.residence_type !== undefined && { type: user.residence_type }),
-          ...(user.hall !== undefined && { hall: user.hall }),
-          ...(user.room_no !== undefined && { room_no: user.room_no }),
-          ...(city_id !== undefined && { city_id }),
-        };
-
-        if (Object.keys(addressUpdates).length > 0) {
-          await tx`
-            UPDATE address
-            SET ${sql(addressUpdates)}
-            WHERE address_id = ${address_id}
-          `;
-        }
+        city_id = cityRow?.city_id;
+        if (!city_id) throw new Error("City name not found");
       }
 
-      const userUpdates = {
-        ...(user.first_name !== undefined && { first_name: user.first_name }),
-        ...(user.last_name !== undefined && { last_name: user.last_name }),
-        ...(user.nickname !== undefined && { nickname: user.nickname }),
-        ...(user.student_id !== undefined && { student_id: user.student_id }),
-        ...(user.batch !== undefined && { batch: user.batch }),
-        ...(user.department !== undefined && { department: user.department }),
-        ...(user.email !== undefined && { email: user.email }),
-        ...(user.phone !== undefined && { phone: user.phone }),
-        ...(user.hashed_password !== undefined && { hashed_password: user.hashed_password }),
-        ...(user.date_of_birth !== undefined && { date_of_birth: user.date_of_birth }),
-        ...(user.gender !== undefined && { gender: user.gender }),
+      const addressUpdates = {
+        ...(user.residence_type && { type: user.residence_type }),
+        ...(user.hall && { hall: user.hall }),
+        ...(user.room_no && { room_no: user.room_no }),
+        ...(city_id && { city_id }),
       };
 
-      if (Object.keys(userUpdates).length > 0) {
-        await tx`
-          UPDATE "user"
-          SET ${sql(userUpdates)}
-          WHERE user_id = ${user.user_id}
+      await tx`
+          UPDATE address
+          SET ${sql(addressUpdates)}
+          WHERE address_id = ${address_id}
         `;
-      }
+
+      const userUpdates = {
+        ...(user.first_name && { first_name: user.first_name }),
+        ...(user.last_name && { last_name: user.last_name }),
+        ...(user.nickname && { nickname: user.nickname }),
+        ...(user.student_id && { student_id: user.student_id }),
+        ...(user.batch && { batch: user.batch }),
+        ...(user.department && { department: user.department }),
+        ...(user.email && { email: user.email }),
+        ...(user.phone && { phone: user.phone }),
+        ...(user.hashed_password && { hashed_password: user.hashed_password }),
+        ...(user.date_of_birth && { date_of_birth: user.date_of_birth }),
+        ...(user.gender && { gender: user.gender }),
+      };
+
+      await tx`
+        UPDATE "user"
+        SET ${sql(userUpdates)}
+        WHERE user_id = ${user.user_id}
+      `;
+
       return { success: true };
     });
     return result;
@@ -172,31 +165,25 @@ export async function updateUser(user) {
 export async function updateUserProfile(profile) {
   try {
     let profile_pic, cover_photo;
-    if (profile.profile_pic !== undefined) {
-      profile_pic = await createMedia({ link: profile.profile_pic, type: "image" });
-    }
-    if (profile.cover_photo !== undefined) {
-      cover_photo = await createMedia({ link: profile.cover_photo, type: "image" });
-    }
+    if (profile.profile_pic) profile_pic = await createMedia({ link: profile.profile_pic, type: "image" });
+    if (profile.cover_photo) cover_photo = await createMedia({ link: profile.cover_photo, type: "image" });
 
     const updates = {
-      ...(profile.bio !== undefined && { bio: profile.bio }),
-      ...(profile.about !== undefined && { about: profile.about }),
+      ...(profile.bio && { bio: profile.bio }),
+      ...(profile.about && { about: profile.about }),
       ...(profile_pic && { profile_pic: profile_pic }),
       ...(cover_photo && { cover_photo: cover_photo }),
     };
 
-    if (Object.keys(updates).length > 0) {
-      await sql`
-        UPDATE user_profile
-        SET ${sql(updates)}
-        WHERE user_id = ${profile.user_id}
-      `;
-    }
+    await sql`
+      UPDATE user_profile
+      SET ${sql(updates)}
+      WHERE user_id = ${profile.user_id}
+    `;
 
     return { success: true };
   } catch (err) {
     console.error("Error in updateUserProfile:", err.message);
-    return { error: err.message || "Unknown error" };
+    return { error: err.message || "Unknown database error" };
   }
 }
