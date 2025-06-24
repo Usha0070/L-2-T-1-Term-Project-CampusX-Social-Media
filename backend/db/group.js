@@ -62,10 +62,17 @@ export async function createGroup(groupData) {
     };
 
     const [row] = await sql`
-      INSERT INTO "group" ${sql(group)}
+      INSERT INTO "group" 
+      ${sql(group)}
       RETURNING group_id
     `;
     if (!row.group_id) throw new Error("Group not created");
+
+    const res = await createGroupMod({ group_id: row.group_id, user_id: groupData.creator_id });
+    if (res.error) throw new Error(res.error);
+    const res2 = await createGroupMember({ group_id: row.group_id, user_id: groupData.creator_id });
+    if (res2.error) throw new Error(res2.error);
+
     return { success: true, group_id: row.group_id };
   } catch (err) {
     console.log("Error in createGroup: ", err);
@@ -73,20 +80,46 @@ export async function createGroup(groupData) {
   }
 }
 
-export async function validateUserGroup(user_id, group_id) {
-  return true; // TODO
-}
-
 export async function validateUserGroupMod(user_id, group_id) {
-  return true; // TODO
+  try {
+    const res = await sql`
+      SELECT 1 FROM group_mod
+      WHERE user_id = ${user_id} AND group_id = ${group_id}
+    `;
+    return res.length > 0;
+  } catch (err) {
+    console.error("Error in validateUserGroupMod: ", err);
+    return { error: err.message };
+  }
 }
 
 export async function validateUserGroupMember(user_id, group_id) {
-  return true; // TODO
+  try {
+    const res = await sql`
+      SELECT 1 FROM group_member
+      WHERE user_id = ${user_id} AND group_id = ${group_id}
+    `;
+    return res.length > 0;
+  } catch (err) {
+    console.error("Error in validateUserGroupMember: ", err);
+    return { error: err.message };
+  }
 }
 
 export async function validateUserGroupPost(user_id, group_id, post_id) {
-  return true; // TODO
+  try {
+    const res = await sql`
+      SELECT 1
+      FROM group_post gp
+      JOIN "group" g ON g.group_id = gp.group_id
+      JOIN post p ON gp.post_id = p.post_id
+      WHERE p.author_id = ${user_id} AND p.post_id = ${post_id} AND g.group_id = ${group_id}
+    `;
+    return res.length > 0;
+  } catch (err) {
+    console.error("Error in validateUserGroupPost: ", err);
+    return { error: err.message };
+  }
 }
 
 export async function modifyGroup(groupData) {
