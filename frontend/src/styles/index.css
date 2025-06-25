@@ -1,0 +1,24 @@
+:root {
+  --bs-body-bg: #e6f4ea;       /* Soft green background */
+  --bs-body-color: #1d2d27;    /* Deep forest green text */
+  --bs-primary: #38a169;       /* Bootstrap primary green override */
+  --bs-secondary: #81c784;     /* Lighter green for accents */
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 128, 0, 0.08);
+  --rounded: 0.75rem;
+
+  line-height: 1.6;
+  font-weight: 400;
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Avenir, Helvetica, Arial, sans-serif;
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}

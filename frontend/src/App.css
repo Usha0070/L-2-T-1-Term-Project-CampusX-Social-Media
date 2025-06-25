@@ -1,0 +1,108 @@
+/* Root layout */
+#root {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Feed Cards */
+.card {
+  background-color: var(--card-bg);
+  padding: 1.5rem;
+  border: none;
+  border-radius: var(--rounded);
+  box-shadow: 0 4px 12px var(--card-shadow);
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* Avatar Circles */
+.card .rounded-circle {
+  font-weight: bold;
+  font-size: 1.1rem;
+  width: 40px;
+  height: 40px;
+  background-color: var(--bs-primary) !important;
+}
+
+/* Author name */
+.card .fw-bold {
+  font-size: 1.05rem;
+  color: #1a3d2c;
+}
+
+/* Metadata (department, time) */
+.card .text-muted {
+  font-size: 0.85rem;
+}
+
+/* Post content */
+.card p {
+  font-size: 1rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+/* Marketplace card within post */
+.bg-light {
+  background-color: #e9f5ec !important;
+  border-left: 4px solid var(--bs-primary);
+}
+
+/* Reaction icons */
+.card .text-muted span {
+  margin-right: 1rem;
+  font-size: 0.9rem;
+}
+
+/* Input field (e.g., "What's on your mind") */
+.form-control {
+  padding: 1rem;
+  border-radius: var(--rounded);
+  border: 1px solid #b5d8c2;
+  background-color: #f4fbf7;
+  transition: box-shadow 0.2s;
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.2);
+  border-color: var(--bs-primary);
+}
+
+/* Navbar */
+.navbar {
+  background-color: #c8e6c9 !important;
+  box-shadow: 0 1px 4px rgba(0, 128, 0, 0.1);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #2e7d32 !important;
+}
+
+.navbar .nav-link {
+  font-weight: 500;
+  color: #2e7d32 !important;
+  margin-left: 1rem;
+}
+
+.navbar .nav-link:hover {
+  color: #1b5e20 !important;
+}
+
+/* Buttons (primary green style) */
+.btn-primary {
+  background-color: var(--bs-primary);
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background-color: #2f855a;
+}
