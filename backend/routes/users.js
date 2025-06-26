@@ -80,6 +80,16 @@ router.get("/me/posts", authenticate, async (req, res, next) => {
   }
 });
 
+router.get("/me/feed", authenticate, async (req, res, next) => {
+  try {
+    const user_id = req.user.user_id;
+    const posts = await db.getFeedByUserId(user_id);
+    res.status(200).json(posts);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/me/friends", authenticate, async (req, res, next) => {
   try {
     const user_id = req.user.user_id;

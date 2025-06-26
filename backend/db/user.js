@@ -82,6 +82,8 @@ export async function createUser(user) {
         RETURNING user_id
       `;
 
+      // ------------------------
+      // convert to trigger
       await tx`
         INSERT INTO user_profile (user_id)
         VALUES (${userRow.user_id})
@@ -91,6 +93,7 @@ export async function createUser(user) {
         INSERT INTO group_member (group_id, user_id)
         VALUES (4, ${userRow.user_id}), (5, ${userRow.user_id})
       `;
+      // ---------------------
 
       return { success: true, user_id: userRow.user_id };
     });
@@ -112,13 +115,11 @@ export async function updateUser(user) {
         `;
       address_id = addressRow?.address_id;
 
-      if (user.city_name !== undefined) {
-        const [cityRow] = await tx`
-            SELECT city_id FROM city WHERE name ILIKE ${user.city_name}
-          `;
-        city_id = cityRow?.city_id;
-        if (!city_id) throw new Error("City name not found");
-      }
+      const [cityRow] = await tx`
+          SELECT city_id FROM city WHERE name ILIKE ${user.city_name}
+        `;
+      city_id = cityRow?.city_id;
+      if (!city_id) throw new Error("City name not found");
 
       const addressUpdates = {
         ...(user.residence_type && { type: user.residence_type }),
@@ -164,24 +165,29 @@ export async function updateUser(user) {
 
 export async function updateUserProfile(profile) {
   try {
-    let profile_pic, cover_photo;
-    if (profile.profile_pic) profile_pic = await createMedia({ link: profile.profile_pic, type: "image" });
-    if (profile.cover_photo) cover_photo = await createMedia({ link: profile.cover_photo, type: "image" });
+    const result = await sql.begin(async (tx) => {
+      let profile_pic, cover_photo;
+      if (profile.profile_pic)
+        profile_pic = await createMedia({ link: profile.profile_pic, type: "image" }, tx);
+      if (profile.cover_photo)
+        cover_photo = await createMedia({ link: profile.cover_photo, type: "image" }, tx);
 
-    const updates = {
-      ...(profile.bio && { bio: profile.bio }),
-      ...(profile.about && { about: profile.about }),
-      ...(profile_pic && { profile_pic: profile_pic }),
-      ...(cover_photo && { cover_photo: cover_photo }),
-    };
+      const updates = {
+        ...(profile.bio && { bio: profile.bio }),
+        ...(profile.about && { about: profile.about }),
+        ...(profile_pic && { profile_pic: profile_pic }),
+        ...(cover_photo && { cover_photo: cover_photo }),
+      };
 
-    await sql`
-      UPDATE user_profile
-      SET ${sql(updates)}
-      WHERE user_id = ${profile.user_id}
-    `;
+      await tx`
+        UPDATE user_profile
+        SET ${sql(updates)}
+        WHERE user_id = ${profile.user_id}
+      `;
 
-    return { success: true };
+      return { success: true };
+    });
+    return result;
   } catch (err) {
     console.error("Error in updateUserProfile:", err.message);
     return { error: err.message || "Unknown database error" };

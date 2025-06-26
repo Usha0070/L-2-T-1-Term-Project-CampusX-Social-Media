@@ -9,13 +9,14 @@ export default function Login() {
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm({
-    resolver: zodResolver(LoginSchema)
+    resolver: zodResolver(LoginSchema),
   });
 
   const onSubmit = (data) => {
     const { identifier } = data;
+    console.log(data);
     localStorage.setItem("loggedInUser", JSON.stringify({ identifier }));
     navigate("/newsfeed");
   };
@@ -25,10 +26,7 @@ export default function Login() {
       className="d-flex justify-content-center align-items-center"
       style={{ minHeight: "80vh", padding: "1rem" }}
     >
-      <div
-        className="col-md-6 col-lg-5 p-4 shadow rounded"
-        style={{ backgroundColor: "#e6f2e6" }}
-      >
+      <div className="col-md-6 col-lg-5 p-4 shadow rounded" style={{ backgroundColor: "#e6f2e6" }}>
         <h2 className="mb-4 text-success text-center fw-bold">Login to CampusX</h2>
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="mb-3">
@@ -37,17 +35,13 @@ export default function Login() {
             </label>
             <input
               type="text"
-              className={`form-control border-success ${
-                errors.identifier ? "is-invalid" : ""
-              }`}
+              className={`form-control border-success ${errors.identifier ? "is-invalid" : ""}`}
               id="identifier"
               {...register("identifier")}
               placeholder="Enter your email or student ID"
               autoFocus
             />
-            {errors.identifier && (
-              <div className="invalid-feedback">{errors.identifier.message}</div>
-            )}
+            {errors.identifier && <div className="invalid-feedback">{errors.identifier.message}</div>}
           </div>
 
           <div className="mb-4">
@@ -56,26 +50,25 @@ export default function Login() {
             </label>
             <input
               type="password"
-              className={`form-control border-success ${
-                errors.password ? "is-invalid" : ""
-              }`}
+              className={`form-control border-success ${errors.password ? "is-invalid" : ""}`}
               id="password"
               {...register("password")}
               placeholder="Enter your password"
             />
-            {errors.password && (
-              <div className="invalid-feedback">{errors.password.message}</div>
-            )}
+            {errors.password && <div className="invalid-feedback">{errors.password.message}</div>}
           </div>
 
-          <button
-            type="submit"
-            className="btn btn-success w-100 rounded-pill py-2 fw-semibold"
-          >
+          <button type="submit" className="btn btn-success w-100 rounded-pill py-2 fw-semibold">
             Login
           </button>
         </form>
       </div>
     </div>
   );
+}
+
+async function callLogin(student_id, password) {
+  const response = axios.post('http://localhost:5000/auth/login', {student_id, password})
+  const data = response.data
+  console.log(data)
 }

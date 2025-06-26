@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/", authenticate, async (req, res) => {
   try {
     const user_id = req.user.user_id;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 200;
     const offset = parseInt(req.query.offset) || 0;
 
     const notifications = await db.getNotificationsByUserId(user_id, limit, offset);
