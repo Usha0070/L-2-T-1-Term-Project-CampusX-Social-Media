@@ -82,19 +82,6 @@ export async function createUser(user) {
         RETURNING user_id
       `;
 
-      // ------------------------
-      // convert to trigger
-      await tx`
-        INSERT INTO user_profile (user_id)
-        VALUES (${userRow.user_id})
-      `;
-
-      await tx`
-        INSERT INTO group_member (group_id, user_id)
-        VALUES (4, ${userRow.user_id}), (5, ${userRow.user_id})
-      `;
-      // ---------------------
-
       return { success: true, user_id: userRow.user_id };
     });
 

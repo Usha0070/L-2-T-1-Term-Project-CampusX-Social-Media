@@ -68,11 +68,6 @@ export async function createGroup(groupData) {
     `;
     if (!row.group_id) throw new Error("Group not created");
 
-    const res = await createGroupMod({ group_id: row.group_id, user_id: groupData.creator_id });
-    if (res.error) throw new Error(res.error);
-    const res2 = await createGroupMember({ group_id: row.group_id, user_id: groupData.creator_id });
-    if (res2.error) throw new Error(res2.error);
-
     return { success: true, group_id: row.group_id };
   } catch (err) {
     console.log("Error in createGroup: ", err);

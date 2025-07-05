@@ -2,7 +2,6 @@ import sql from "./sql.js";
 
 import { createMedia } from "./media.js";
 import { createMarketPost, createTuitionPost } from "./post2.js";
-import { createNotification } from "./notification.js";
 import { getFriendsByUserId } from "./friend.js";
 
 export async function getPostByPostId(post_id) {
@@ -167,7 +166,6 @@ export async function createPostLike(post, liker) {
     INSERT INTO post_like (post_id, user_id)
     VALUES (${post}, ${liker})
   `;
-  await createNotification(await getUserIdByPostId(post), user, "post_like", { post_id: post });
 }
 
 export async function deletePostLike(post, liker) {
@@ -182,12 +180,6 @@ export async function createPostComment(commentData) {
     INSERT INTO post_comment ${sql(commentData)}
     RETURNING comment_id
   `;
-  await createNotification(
-    await getUserIdByPostId(commentData.post_id),
-    commentData.author_id,
-    "post_comment",
-    { post_id: commentData.post_id, comment_id: result.comment_id }
-  );
   return { success: true, comment_id: result.comment_id };
 }
 

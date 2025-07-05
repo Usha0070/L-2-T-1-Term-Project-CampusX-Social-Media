@@ -1,40 +1,11 @@
 import sql from "./sql.js";
-import { createNotification } from "./notification.js";
 
 export async function getFriendsByUserId(user_id) {
-  const [friends] = await sql`
-    SELECT jsonb_build_object(
-    'friends', JSON_AGG(
-        CASE
-        WHEN f.status = 'Accepted' THEN jsonb_build_object(
-            'user_id', CASE WHEN f.user_id = ${user_id} THEN f.friend_id ELSE f.user_id END,
-            'since', f.created_at
-        )
-        END
-    ) FILTER (WHERE f.status = 'Accepted'),
-
-    'friend_requests_sent', JSON_AGG(
-        CASE
-        WHEN f.status = 'Pending' AND f.action_user_id = ${user_id} THEN jsonb_build_object(
-            'user_id', CASE WHEN f.user_id = ${user_id} THEN f.friend_id ELSE f.user_id END,
-            'since', f.created_at
-        )
-        END
-    ) FILTER (WHERE f.status = 'Pending' AND f.action_user_id = ${user_id}),
-
-    'friend_requests_received', JSON_AGG(
-        CASE
-        WHEN f.status = 'Pending' AND f.action_user_id <> ${user_id} THEN jsonb_build_object(
-            'user_id', CASE WHEN f.user_id = ${user_id} THEN f.friend_id ELSE f.user_id END,
-            'since', f.created_at
-        )
-        END
-    ) FILTER (WHERE f.status = 'Pending' AND f.action_user_id <> ${user_id})
-    ) AS result
-    FROM friendship f
-    WHERE ${user_id} IN (f.user_id, f.friend_id);
-    `;
-  return friends.result;
+  // using sql function
+  const [result] = await sql`
+    SELECT get_friend_data(${user_id});
+  `;
+  return result.get_friend_data;
 }
 
 export async function getFollowsByUserId(user_id) {
@@ -99,16 +70,10 @@ export async function updateFriendship(friendship) {
 
       case "req_accept":
         await acceptFriend(friendship.user_id, friendship.friend_id, friendship.user_id);
-        await createNotification(friendship.friend_id, friendship.user_id, "friend_req_accepted", {
-          user_id: friendship.user_id,
-        });
         break;
 
       case "req_sent":
         await createFriend(friendship.user_id, friendship.friend_id, friendship.user_id);
-        await createNotification(friendship.friend_id, friendship.user_id, "friend_req_received", {
-          user_id: friendship.user_id,
-        });
         break;
     }
     return { success: true };
