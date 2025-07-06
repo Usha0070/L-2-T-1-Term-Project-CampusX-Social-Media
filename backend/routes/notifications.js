@@ -1,10 +1,9 @@
 import express from "express";
 import * as db from "../db/index.js";
-import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.get("/", authenticate, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const user_id = req.user.user_id;
     const limit = parseInt(req.query.limit) || 200;

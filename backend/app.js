@@ -3,12 +3,15 @@ import express from "express";
 import cors from "cors";
 import z from "zod";
 
+import { authenticate, authenticateAdmin } from "./middleware/auth.js";
+
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import postsRouter from "./routes/posts.js";
 import groupsRouter from "./routes/groups.js";
 import chatsRouter from "./routes/chats.js";
 import notificationsRouter from "./routes/notifications.js";
+import statsRouter from "./routes/stats.js";
 
 const port = process.env.SERVER_PORT || 5000;
 const app = express();
@@ -16,11 +19,12 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/auth", authRouter);
-app.use("/users", usersRouter);
-app.use("/posts", postsRouter);
-app.use("/groups", groupsRouter);
-app.use("/chats", chatsRouter);
-app.use("/notifications", notificationsRouter);
+app.use("/users", authenticate, usersRouter);
+app.use("/posts", authenticate, postsRouter);
+app.use("/groups", authenticate, groupsRouter);
+app.use("/chats", authenticate, chatsRouter);
+app.use("/notifications", authenticate, notificationsRouter);
+app.use("/stats", authenticate, authenticateAdmin, statsRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

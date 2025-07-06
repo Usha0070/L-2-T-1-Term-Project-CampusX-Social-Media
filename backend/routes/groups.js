@@ -1,12 +1,11 @@
 import express from "express";
 import * as db from "../db/index.js";
-import { authenticate } from "../middleware/auth.js";
 import { upload } from "../middleware/upload.js";
 import * as schema from "../middleware/schema.js";
 
 const router = express.Router();
 
-router.get("/", authenticate, async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
     const groups = await db.getGroups();
     res.status(200).json(groups);
@@ -17,7 +16,6 @@ router.get("/", authenticate, async (req, res, next) => {
 
 router.post(
   "/",
-  authenticate,
   upload.fields([
     { name: "profile_pic", maxCount: 1 },
     { name: "cover_photo", maxCount: 1 },
@@ -40,7 +38,7 @@ router.post(
   }
 );
 
-router.get("/:id", authenticate, async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const group_id = req.params.id;
     const group = await db.getGroupByGroupId(group_id);
@@ -52,7 +50,6 @@ router.get("/:id", authenticate, async (req, res, next) => {
 
 router.put(
   "/:id",
-  authenticate,
   upload.fields([
     { name: "profile_pic", maxCount: 1 },
     { name: "cover_photo", maxCount: 1 },
@@ -77,7 +74,7 @@ router.put(
   }
 );
 
-router.get("/:id/mods", authenticate, async (req, res, next) => {
+router.get("/:id/mods", async (req, res, next) => {
   try {
     const group_id = req.params.id;
     const mods = await db.getGroupModsByGroupId(group_id);
@@ -87,7 +84,7 @@ router.get("/:id/mods", authenticate, async (req, res, next) => {
   }
 });
 
-router.post("/:id/mods", authenticate, async (req, res, next) => {
+router.post("/:id/mods", async (req, res, next) => {
   try {
     const body = {
       group_id: req.params.id,
@@ -103,7 +100,7 @@ router.post("/:id/mods", authenticate, async (req, res, next) => {
   }
 });
 
-router.delete("/:id/mods/:mid", authenticate, async (req, res, next) => {
+router.delete("/:id/mods/:mid", async (req, res, next) => {
   try {
     const body = {
       group_id: req.params.id,
@@ -119,7 +116,7 @@ router.delete("/:id/mods/:mid", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/:id/members", authenticate, async (req, res, next) => {
+router.get("/:id/members", async (req, res, next) => {
   try {
     const group_id = req.params.id;
     const members = await db.getGroupMembersByGroupId(group_id);
@@ -129,7 +126,7 @@ router.get("/:id/members", authenticate, async (req, res, next) => {
   }
 });
 
-router.post("/:id/members", authenticate, async (req, res, next) => {
+router.post("/:id/members", async (req, res, next) => {
   try {
     const body = {
       group_id: req.params.id,
@@ -145,7 +142,7 @@ router.post("/:id/members", authenticate, async (req, res, next) => {
   }
 });
 
-router.delete("/:id/members/:mid", authenticate, async (req, res, next) => {
+router.delete("/:id/members/:mid", async (req, res, next) => {
   try {
     const body = {
       group_id: req.params.id,
@@ -161,7 +158,7 @@ router.delete("/:id/members/:mid", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/:id/posts", authenticate, async (req, res, next) => {
+router.get("/:id/posts", async (req, res, next) => {
   try {
     const group_id = req.params.id;
     const posts = await db.getGroupPostsByGroupId(group_id);
@@ -171,7 +168,7 @@ router.get("/:id/posts", authenticate, async (req, res, next) => {
   }
 });
 
-router.post("/:id/posts", authenticate, async (req, res, next) => {
+router.post("/:id/posts", async (req, res, next) => {
   try {
     const body = {
       group_id: req.params.id,
@@ -187,7 +184,7 @@ router.post("/:id/posts", authenticate, async (req, res, next) => {
   }
 });
 
-router.put("/:id/posts/:pid", authenticate, async (req, res, next) => {
+router.put("/:id/posts/:pid", async (req, res, next) => {
   try {
     const body = {
       group_id: req.params.id,
@@ -206,7 +203,7 @@ router.put("/:id/posts/:pid", authenticate, async (req, res, next) => {
   }
 });
 
-router.delete("/:id/posts/:pid", authenticate, async (req, res, next) => {
+router.delete("/:id/posts/:pid", async (req, res, next) => {
   try {
     const body = {
       group_id: req.params.id,

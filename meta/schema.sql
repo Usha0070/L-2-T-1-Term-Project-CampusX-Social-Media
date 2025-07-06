@@ -40,6 +40,7 @@ CREATE TABLE "user" (
     phone CHAR(20),
     hashed_password VARCHAR(255) NOT NULL,
     date_of_birth DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     gender gender_type NOT NULL,
     address_id INT UNIQUE REFERENCES address(address_id) NOT NULL
 );

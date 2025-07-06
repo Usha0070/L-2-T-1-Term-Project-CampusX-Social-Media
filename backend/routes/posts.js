@@ -1,12 +1,11 @@
 import express from "express";
 import * as db from "../db/index.js";
-import { authenticate } from "../middleware/auth.js";
 import * as schema from "../middleware/schema.js";
 import { upload } from "../middleware/upload.js";
 
 const router = express.Router();
 
-router.get("/:id", authenticate, async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const post_id = req.params.id;
     const post = await db.getPostByPostId(post_id);
@@ -16,7 +15,7 @@ router.get("/:id", authenticate, async (req, res, next) => {
   }
 });
 
-router.post("/", authenticate, upload.fields([{ name: "media", maxCount: 10 }]), async (req, res, next) => {
+router.post("/", upload.fields([{ name: "media", maxCount: 10 }]), async (req, res, next) => {
   try {
     const body = {
       user_id: req.user.user_id,
@@ -38,7 +37,7 @@ router.post("/", authenticate, upload.fields([{ name: "media", maxCount: 10 }]),
   }
 });
 
-router.put("/:id", authenticate, upload.fields([{ name: "media", maxCount: 10 }]), async (req, res, next) => {
+router.put("/:id", upload.fields([{ name: "media", maxCount: 10 }]), async (req, res, next) => {
   try {
     const body = {
       user_id: req.user.user_id,
@@ -63,7 +62,7 @@ router.put("/:id", authenticate, upload.fields([{ name: "media", maxCount: 10 }]
   }
 });
 
-router.post("/:id/likes", authenticate, async (req, res, next) => {
+router.post("/:id/likes", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const post_id = req.params.id;
@@ -74,7 +73,7 @@ router.post("/:id/likes", authenticate, async (req, res, next) => {
   }
 });
 
-router.delete("/:id/likes", authenticate, async (req, res, next) => {
+router.delete("/:id/likes", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const post_id = req.params.id;
@@ -85,7 +84,7 @@ router.delete("/:id/likes", authenticate, async (req, res, next) => {
   }
 });
 
-router.post("/:id/comments", authenticate, async (req, res, next) => {
+router.post("/:id/comments", async (req, res, next) => {
   try {
     const commentData = {
       author_id: req.user.user_id,
@@ -99,7 +98,7 @@ router.post("/:id/comments", authenticate, async (req, res, next) => {
   }
 });
 
-router.put("/:id/comments/:cid", authenticate, async (req, res, next) => {
+router.put("/:id/comments/:cid", async (req, res, next) => {
   try {
     const body = {
       comment_id: req.params.cid,
@@ -117,7 +116,7 @@ router.put("/:id/comments/:cid", authenticate, async (req, res, next) => {
   }
 });
 
-router.delete("/:id/comments/:cid", authenticate, async (req, res, next) => {
+router.delete("/:id/comments/:cid", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const comment_id = req.params.cid;

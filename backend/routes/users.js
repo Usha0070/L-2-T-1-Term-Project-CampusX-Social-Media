@@ -1,7 +1,6 @@
 import express from "express";
 import * as db from "../db/index.js";
 import { generateHashedPassword } from "./auth.js";
-import { authenticate } from "../middleware/auth.js";
 import * as schema from "../middleware/schema.js";
 import { upload } from "../middleware/upload.js";
 
@@ -9,7 +8,7 @@ const router = express.Router();
 
 // self
 
-router.get("/me", authenticate, async (req, res, next) => {
+router.get("/me", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const user = await db.getUserByUserId(user_id);
@@ -19,7 +18,7 @@ router.get("/me", authenticate, async (req, res, next) => {
   }
 });
 
-router.put("/me", authenticate, async (req, res, next) => {
+router.put("/me", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const body = {
@@ -35,7 +34,7 @@ router.put("/me", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/me/profile", authenticate, async (req, res, next) => {
+router.get("/me/profile", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const profile = await db.getUserProfileByUserId(user_id);
@@ -47,7 +46,6 @@ router.get("/me/profile", authenticate, async (req, res, next) => {
 
 router.put(
   "/me/profile",
-  authenticate,
   upload.fields([
     { name: "profile_pic", maxCount: 1 },
     { name: "cover_photo", maxCount: 1 },
@@ -70,7 +68,7 @@ router.put(
   }
 );
 
-router.get("/me/posts", authenticate, async (req, res, next) => {
+router.get("/me/posts", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const posts = await db.getPostsByUserId(user_id);
@@ -80,7 +78,7 @@ router.get("/me/posts", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/me/feed", authenticate, async (req, res, next) => {
+router.get("/me/feed", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const posts = await db.getFeedByUserId(user_id);
@@ -90,7 +88,7 @@ router.get("/me/feed", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/me/friends", authenticate, async (req, res, next) => {
+router.get("/me/friends", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const friends = await db.getFriendsByUserId(user_id);
@@ -100,7 +98,7 @@ router.get("/me/friends", authenticate, async (req, res, next) => {
   }
 });
 
-router.put("/me/friends", authenticate, async (req, res, next) => {
+router.put("/me/friends", async (req, res, next) => {
   try {
     const body = schema.FriendSchema.parse(req.body);
     const result = await db.updateFriendship({ ...body, user_id: req.user.user_id });
@@ -111,7 +109,7 @@ router.put("/me/friends", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/me/follows", authenticate, async (req, res, next) => {
+router.get("/me/follows", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const follows = await db.getFollowsByUserId(user_id);
@@ -121,7 +119,7 @@ router.get("/me/follows", authenticate, async (req, res, next) => {
   }
 });
 
-router.put("/me/follows", authenticate, async (req, res, next) => {
+router.put("/me/follows", async (req, res, next) => {
   try {
     const body = schema.FollowSchema.parse(req.body);
     const result = await db.updateFollow({ ...body, user_id: req.user.user_id });
@@ -132,7 +130,7 @@ router.put("/me/follows", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/me/blocks", authenticate, async (req, res, next) => {
+router.get("/me/blocks", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const blocks = await db.getBlocksByUserId(user_id);
@@ -142,7 +140,7 @@ router.get("/me/blocks", authenticate, async (req, res, next) => {
   }
 });
 
-router.put("/me/blocks", authenticate, async (req, res, next) => {
+router.put("/me/blocks", async (req, res, next) => {
   try {
     const body = schema.BlockSchema.parse(req.body);
     const result = await db.updateBlock({ ...body, user_id: req.user.user_id });
@@ -155,7 +153,7 @@ router.put("/me/blocks", authenticate, async (req, res, next) => {
 
 // public
 
-router.get("/:id", authenticate, async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const user_id = req.params.id;
     const user = await db.getUserByUserId(user_id);
@@ -165,7 +163,7 @@ router.get("/:id", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/:id/profile", authenticate, async (req, res, next) => {
+router.get("/:id/profile", async (req, res, next) => {
   try {
     const user_id = req.params.id;
     const profile = await db.getUserProfileByUserId(user_id);
@@ -175,7 +173,7 @@ router.get("/:id/profile", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/:id/posts", authenticate, async (req, res, next) => {
+router.get("/:id/posts", async (req, res, next) => {
   try {
     const user_id = req.params.id;
     const posts = await db.getPostsByUserId(user_id);

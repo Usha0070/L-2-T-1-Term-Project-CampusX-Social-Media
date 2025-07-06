@@ -1,11 +1,10 @@
 import express from "express";
 import * as db from "../db/index.js";
-import { authenticate } from "../middleware/auth.js";
 import * as schema from "../middleware/schema.js";
 
 const router = express.Router();
 
-router.get("/", authenticate, async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const chats = await db.getChatsByUserId(user_id);
@@ -15,7 +14,7 @@ router.get("/", authenticate, async (req, res, next) => {
   }
 });
 
-router.post("/", authenticate, async (req, res, next) => {
+router.post("/", async (req, res, next) => {
   try {
     const body = {
       user1_id: req.user.user_id,
@@ -29,7 +28,7 @@ router.post("/", authenticate, async (req, res, next) => {
   }
 });
 
-router.get("/:id", authenticate, async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const chat_id = req.params.id;
@@ -45,7 +44,7 @@ router.get("/:id", authenticate, async (req, res, next) => {
   }
 });
 
-router.post("/:id", authenticate, async (req, res, next) => {
+router.post("/:id", async (req, res, next) => {
   try {
     const body = {
       chat_id: req.params.id,
@@ -62,7 +61,7 @@ router.post("/:id", authenticate, async (req, res, next) => {
   }
 });
 
-router.put("/:id/:mid", authenticate, async (req, res, next) => {
+router.put("/:id/:mid", async (req, res, next) => {
   try {
     const body = {
       message_id: req.params.mid,
@@ -79,7 +78,7 @@ router.put("/:id/:mid", authenticate, async (req, res, next) => {
   }
 });
 
-router.delete("/:id/:mid", authenticate, async (req, res, next) => {
+router.delete("/:id/:mid", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const chat_id = req.params.id;

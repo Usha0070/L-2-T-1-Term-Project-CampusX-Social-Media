@@ -5,3 +5,4 @@ export * from "./friend.js";
 export * from "./chat.js";
 export * from "./notification.js";
 export * from "./media.js";
+export * from "./stat.js";

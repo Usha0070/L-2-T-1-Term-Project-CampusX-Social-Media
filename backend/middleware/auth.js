@@ -17,3 +17,11 @@ export function authenticate(req, res, next) {
     next();
   });
 }
+
+export function authenticateAdmin(req, res, next) {
+  const admins = [1, 2, 3, 106, 110];
+  const user_id = req.user.user_id;
+
+  if (!admins.includes(user_id)) return res.status(403).json({ error: "Not an admin" });
+  next();
+}
