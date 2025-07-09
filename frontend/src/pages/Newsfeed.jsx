@@ -23,7 +23,7 @@ function Newsfeed() {
           return;
         }
         const backendURL = "http://localhost:5000";
-        const res = await fetch(`${backendURL}/api/feed?page=${page}`, {
+        const res = await fetch(`${backendURL}/users/me/feed`, {
           credentials: "include",
           headers: { Authorization: `Bearer ${token}` },
         });

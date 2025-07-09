@@ -15,7 +15,12 @@ import statsRouter from "./routes/stats.js";
 
 const port = process.env.SERVER_PORT || 5000;
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true, // if you're using cookies or auth headers
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json());
 
 // 🔌 Mount routes

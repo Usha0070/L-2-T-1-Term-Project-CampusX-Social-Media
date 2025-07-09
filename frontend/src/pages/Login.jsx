@@ -104,9 +104,3 @@ export default function Login() {
     </div>
   );
 }
-
-async function callLogin(student_id, password) {
-  const response = axios.post('http://localhost:5000/auth/login', {student_id, password})
-  const data = response.data
-  console.log(data)
-}
