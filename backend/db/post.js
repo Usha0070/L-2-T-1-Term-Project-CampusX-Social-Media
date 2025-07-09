@@ -161,17 +161,19 @@ async function getUserIdByPostId(post_id) {
   return row.author_id;
 }
 
-export async function createPostLike(post, liker) {
+
+export async function createPostLike(post_id, user_id) {
   await sql`
     INSERT INTO post_like (post_id, user_id)
-    VALUES (${post}, ${liker})
+    VALUES (${post_id}, ${user_id})
+    ON CONFLICT DO NOTHING
   `;
 }
 
-export async function deletePostLike(post, liker) {
+export async function deletePostLike(post_id, user_id) {
   await sql`
     DELETE FROM post_like
-    WHERE post_id = ${post} AND user_id = ${liker}
+    WHERE post_id = ${post_id} AND user_id = ${user_id}
   `;
 }
 

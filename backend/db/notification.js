@@ -8,7 +8,7 @@ export async function getNotificationsByUserId(user_id, limit = 20, offset = 0) 
     ORDER BY created_at DESC
     LIMIT ${limit}
     OFFSET ${offset}
-    `;
+  `;
   return notifications;
 }
 

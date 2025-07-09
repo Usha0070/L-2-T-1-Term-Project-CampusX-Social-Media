@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const LoginSchema = z.object({
-  identifier: z.string().min(1, "Email or Student ID is required"),
-  password: z.string().min(1, "Password is required"),
+  student_id: z.string()
+    .min(1, "Student ID is required")
+    .regex(/^\d+$/, "Student ID must be a number string"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });

@@ -18,6 +18,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 🔌 Mount routes
 app.use("/auth", authRouter);
 app.use("/users", authenticate, usersRouter);
 app.use("/posts", authenticate, postsRouter);
@@ -28,11 +29,11 @@ app.use("/stats", authenticate, authenticateAdmin, statsRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  if (err instanceof z.ZodError) res.status(err.status || 400).json({ error: err.errors });
-  else
-    res.status(err.status || 500).json({
-      error: err.message || "Internal Server Error",
-    });
+  if (err instanceof z.ZodError) {
+    res.status(err.status || 400).json({ error: err.errors });
+  } else {
+    res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
+  }
 });
 
 app.use((req, res) => {
