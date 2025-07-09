@@ -8,7 +8,7 @@ export async function getUserJoined(params) {
     const column = metric === "hall" ? "a.hall" : "u.department";
 
     const query = `
-      SELECT ${column} AS group_value, COUNT(*) AS user_count
+      SELECT ${column} AS group_value, COUNT(*)::INT AS user_count
       FROM "user" u
       JOIN address a ON u.address_id = a.address_id
       WHERE u.created_at >= NOW() - INTERVAL '${period}'
@@ -74,11 +74,11 @@ export async function getTopPosts(params) {
       ),
       post_scores AS (
         SELECT post_id,
-          SUM(CASE WHEN type = 'like' THEN cnt ELSE 0 END) AS like_count,
-          SUM(CASE WHEN type = 'comment' THEN cnt ELSE 0 END) AS comment_count,
-          SUM(CASE WHEN type = 'share' THEN cnt ELSE 0 END) AS share_count,
-          SUM(CASE WHEN type = 'tag' THEN cnt ELSE 0 END) AS tag_count,
-          SUM(cnt) AS total_score
+          SUM(CASE WHEN type = 'like' THEN cnt ELSE 0 END)::INT AS like_count,
+          SUM(CASE WHEN type = 'comment' THEN cnt ELSE 0 END)::INT AS comment_count,
+          SUM(CASE WHEN type = 'share' THEN cnt ELSE 0 END)::INT AS share_count,
+          SUM(CASE WHEN type = 'tag' THEN cnt ELSE 0 END)::INT AS tag_count,
+          SUM(cnt)::INT AS total_score
         FROM interactions
         GROUP BY post_id
       )
@@ -151,10 +151,10 @@ export async function getActiveUsers(params) {
       ),
       score_by_user AS (
         SELECT user_id,
-          SUM(CASE WHEN type = 'post' THEN cnt ELSE 0 END) AS post_count,
-          SUM(CASE WHEN type = 'like' THEN cnt ELSE 0 END) AS like_count,
-          SUM(CASE WHEN type = 'comment' THEN cnt ELSE 0 END) AS comment_count,
-          SUM(cnt) AS total_score
+          SUM(CASE WHEN type = 'post' THEN cnt ELSE 0 END)::INT AS post_count,
+          SUM(CASE WHEN type = 'like' THEN cnt ELSE 0 END)::INT AS like_count,
+          SUM(CASE WHEN type = 'comment' THEN cnt ELSE 0 END)::INT AS comment_count,
+          SUM(cnt)::INT AS total_score
         FROM activity
         GROUP BY user_id
       )
@@ -210,9 +210,9 @@ export async function getActiveGroups(params) {
       ),
       score_by_group AS (
         SELECT group_id,
-          SUM(CASE WHEN type = 'member' THEN cnt ELSE 0 END) AS new_members,
-          SUM(CASE WHEN type = 'post' THEN cnt ELSE 0 END) AS posts,
-          SUM(cnt) AS total_score
+          SUM(CASE WHEN type = 'member' THEN cnt ELSE 0 END)::INT AS new_members,
+          SUM(CASE WHEN type = 'post' THEN cnt ELSE 0 END)::INT AS posts,
+          SUM(cnt)::INT AS total_score
         FROM activity
         GROUP BY group_id
       )
@@ -264,7 +264,7 @@ export async function getTrends(params) {
       SELECT
         date_trunc('${period}', ${dateColumn}) AS period_start,
         date_trunc('${period}', ${dateColumn}) + interval '1 ${period}' AS period_end,
-        COUNT(*) AS ${countAlias}
+        COUNT(*)::INT AS ${countAlias}
       FROM ${table}
       ${condition}
       GROUP BY period_start, period_end
@@ -338,9 +338,9 @@ export async function getTuitionStats() {
     const queries = [
       sql`
         SELECT
-          COUNT(*) AS total,
-          COUNT(*) FILTER (WHERE status = 'Available') AS available,
-          COUNT(*) FILTER (WHERE status = 'Booked') AS booked
+          COUNT(*)::INT AS total,
+          COUNT(*) FILTER (WHERE status = 'Available')::INT AS available,
+          COUNT(*) FILTER (WHERE status = 'Booked')::INT AS booked
         FROM tuition_post;
       `,
 

@@ -37,8 +37,7 @@ router.get("/", async (req, res, next) => {
         break;
 
       default:
-        res.status(400).json({ error: "Invalid query" });
-        break;
+        return res.status(400).json({ error: "Invalid query" });
     }
     if (result.error) return res.status(400).json({ error: result.error });
     res.status(200).json(result);
