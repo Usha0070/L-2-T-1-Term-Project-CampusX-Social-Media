@@ -12,8 +12,11 @@ export function authenticate(req, res, next) {
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: "Invalid token" });
-    req.user = user;
-    next();
-  });
+  if (err) return res.status(403).json({ error: "Invalid token" });
+
+  console.log("✅ Decoded user from token:", user);  // Add this
+  req.user = user;
+  next();
+});
+
 }

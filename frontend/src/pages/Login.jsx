@@ -2,6 +2,23 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginSchema } from "../utils/schemas/loginSchema";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+export async function callLogin(student_id, password) {
+  try {
+    console.log("Sending login data:", { student_id, password });
+    const response = await axios.post("http://localhost:5000/auth/login", {
+      student_id, // number here
+      password,
+    });
+    const { user_id, accessToken } = response.data;
+    console.log("Login successful. User ID:", user_id);
+    return { user_id, token: accessToken };
+  } catch (error) {
+    console.error("Login failed:", error.response?.data || error.message);
+    throw error;
+  }
+}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -14,11 +31,28 @@ export default function Login() {
     resolver: zodResolver(LoginSchema)
   });
 
-  const onSubmit = (data) => {
-    const { identifier } = data;
-    localStorage.setItem("loggedInUser", JSON.stringify({ identifier }));
+  const onSubmit = async (data) => {
+  // Convert student_id string from form input to number
+  const student_id = Number(data.student_id);
+
+  if (isNaN(student_id)) {
+    alert("Invalid Student ID format. Please enter numbers only.");
+    return;
+  }
+
+  const password = data.password;
+
+  try {
+    const { user_id, token } = await callLogin(student_id, password);
+    localStorage.setItem("loggedInUser", JSON.stringify({ user_id, token }));
+    alert(`Login Successful!\n\nWelcome User ID: ${user_id}`);
     navigate("/newsfeed");
-  };
+  } catch (err) {
+    alert("Login failed: " + (err.response?.data?.message || err.message));
+  }
+};
+
+
 
   return (
     <div
@@ -32,22 +66,23 @@ export default function Login() {
         <h2 className="mb-4 text-success text-center fw-bold">Login to CampusX</h2>
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="mb-3">
-            <label htmlFor="identifier" className="form-label fw-semibold text-success">
-              Email or Student ID
+            <label htmlFor="student_id" className="form-label fw-semibold text-success">
+            Student ID
             </label>
             <input
               type="text"
               className={`form-control border-success ${
-                errors.identifier ? "is-invalid" : ""
+                errors.student_id ? "is-invalid" : ""
               }`}
-              id="identifier"
-              {...register("identifier")}
-              placeholder="Enter your email or student ID"
-              autoFocus
-            />
-            {errors.identifier && (
-              <div className="invalid-feedback">{errors.identifier.message}</div>
-            )}
+            id="student_id"
+            {...register("student_id")}
+          placeholder="Enter your student ID"
+        autoFocus
+/>
+{errors.student_id && (
+  <div className="invalid-feedback">{errors.student_id.message}</div>
+)}
+
           </div>
 
           <div className="mb-4">
