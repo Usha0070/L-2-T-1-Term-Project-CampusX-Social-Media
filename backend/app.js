@@ -23,7 +23,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// 🔌 Mount routes
 app.use("/auth", authRouter);
 app.use("/users", authenticate, usersRouter);
 app.use("/posts", authenticate, postsRouter);

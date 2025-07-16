@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import PostModal from "../modals/PostModal"; // Adjust path
+import PostModal from "../modals/PostModal";
 
 export default function PostComponent({ post }) {
   const [liked, setLiked] = useState(post.liked_by_user);
