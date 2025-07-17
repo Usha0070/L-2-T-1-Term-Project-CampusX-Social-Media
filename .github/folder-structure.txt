@@ -1,0 +1,19 @@
+CampusX/
+.github/
+.vscode/
+backend/
+    db/
+    middleware/
+    routes/
+frontend2/
+    .vscode/
+    public/
+    src/
+        assets/
+        components/
+        router/
+        utils/
+        views/
+generator/
+meta/
+    media/

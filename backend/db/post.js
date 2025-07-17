@@ -22,14 +22,18 @@ export async function getPostsByUserId(user_id) {
   return posts;
 }
 
-export async function getFeedByUserId(user_id) {
+export async function getFeedByUserId(user_id, limit = 20, offset = 0) {
   const friends = await getFriendsByUserId(user_id);
   const userIds = [...friends.friends.map((friend) => friend.user_id), user_id];
   const ids = await sql`
     SELECT DISTINCT post_id FROM post_tag
     WHERE user_id = ANY(${userIds})
+    ORDER BY post_id DESC
   `;
-  const posts = await getPostByPostId(ids.map((id) => id.post_id));
+  const allPostIds = ids.map((id) => id.post_id);
+  const paginatedIds = allPostIds.slice(offset, offset + limit);
+  const posts = await getPostByPostId(paginatedIds);
+
   return posts;
 }
 
