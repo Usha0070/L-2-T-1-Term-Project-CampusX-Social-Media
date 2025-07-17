@@ -161,3 +161,26 @@ output:
 The media files are saved in 
 /meta/media
 For now, take use media files directly from this directory. No need to use api to get media files.
+
+to like a post:
+POST /api/posts/:id/likes
+to unlike a post:
+DELETE /api/posts/:id/likes
+
+to comment in a post:
+POST /api/posts/:id/comments
+format:
+export const CommentSchema = z.object({
+  content: z.string(),
+  parent_comment_id: z.coerce.number().optional(),
+});
+returns
+{ success: true, comment_id: result.comment_id }
+
+to edit a comment:
+PUT /api/posts/:id/comments/:cid
+format:
+CommentSchema
+
+to delete a comment:
+DELETE /api/posts/:id/commnets/:cid

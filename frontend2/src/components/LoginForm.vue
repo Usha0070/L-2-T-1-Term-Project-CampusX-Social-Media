@@ -90,8 +90,8 @@ async function onSubmit() {
       student_id: student_id.value,
       password: password.value,
     });
-    const token = res.data.accessToken;
-    localStorage.setItem("token", token);
+    localStorage.setItem("user_id", res.data.user_id);
+    localStorage.setItem("token", res.data.accessToken);
     router.push("/");
   } catch (err) {
     error.value = err.response?.data?.error || err.message || "Login failed";

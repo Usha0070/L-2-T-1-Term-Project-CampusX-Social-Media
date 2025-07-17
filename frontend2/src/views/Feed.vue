@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import axios from "../utils/axios";
 import Post from "../components/Post.vue";
 
@@ -7,17 +7,41 @@ const posts = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
+// Pagination state
+const limit = ref(20);
+const offset = ref(0);
+const currentPage = ref(1);
+
 const fetchPosts = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await axios.get("/api/users/me/feed");
+    const response = await axios.get("/api/users/me/feed", {
+      params: {
+        limit: limit.value,
+        offset: offset.value,
+      },
+    });
     posts.value = response.data;
   } catch (err) {
     error.value = err.response?.data?.message || "Failed to load posts";
     console.error("Error fetching posts:", err);
   } finally {
     loading.value = false;
+  }
+};
+
+const nextPage = () => {
+  offset.value += limit.value;
+  currentPage.value += 1;
+  fetchPosts();
+};
+
+const prevPage = () => {
+  if (offset.value >= limit.value) {
+    offset.value -= limit.value;
+    currentPage.value -= 1;
+    fetchPosts();
   }
 };
 
@@ -66,6 +90,25 @@ onMounted(() => {
         <i class="fa-regular fa-newspaper mb-2 text-4xl text-gray-400"></i>
         <h3 class="text-lg font-medium text-gray-700">No posts yet</h3>
         <p class="mt-1 text-gray-500">Posts from your connections will appear here</p>
+      </div>
+
+      <!-- Pagination controls -->
+      <div class="flex justify-between items-center mt-6" v-if="posts.length > 0">
+        <button
+          @click="prevPage"
+          :disabled="currentPage === 1 || loading"
+          class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span class="text-gray-600">Page {{ currentPage }}</span>
+        <button
+          @click="nextPage"
+          :disabled="posts.length < limit || loading"
+          class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   </div>

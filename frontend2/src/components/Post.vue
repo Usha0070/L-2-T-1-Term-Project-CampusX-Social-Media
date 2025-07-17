@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "../utils/axios";
 
 const props = defineProps({
@@ -11,6 +11,17 @@ const props = defineProps({
 
 const author = ref(null);
 const authorProfile = ref(null);
+const likesCount = ref(props.post.likes?.length || 0);
+const showComments = ref(false);
+const newComment = ref("");
+const comments = ref(props.post.comments || []);
+const commentLoading = ref(false);
+const likeLoading = ref(false);
+const commenters = ref(new Map()); // Store commenter info
+const currentUser = ref({
+  user_id: parseInt(localStorage.getItem("user_id")) || null,
+});
+const isLiked = ref(props.post.likes?.some((like) => like.user_id === currentUser.value?.user_id) || false);
 
 const handleImageError = (type, path) => {
   console.error(`Failed to load ${type}:`, path);
@@ -24,14 +35,97 @@ const fetchAuthorInfo = async () => {
     ]);
     author.value = userRes.data;
     authorProfile.value = profileRes.data;
-    console.log("Author Profile:", authorProfile.value);
-    console.log("Post Media:", props.post.media);
   } catch (error) {
     console.error("Error fetching author info:", error);
   }
 };
 
-onMounted(fetchAuthorInfo);
+const fetchCommenterInfo = async (authorId) => {
+  try {
+    const [userRes, profileRes] = await Promise.all([
+      axios.get(`/api/users/${authorId}`),
+      axios.get(`/api/users/${authorId}/profile`),
+    ]);
+    commenters.value.set(authorId, {
+      user: userRes.data,
+      profile: profileRes.data,
+    });
+  } catch (error) {
+    console.error("Error fetching commenter info:", error);
+  }
+};
+
+const fetchAllCommentersInfo = async () => {
+  const uniqueAuthorIds = [...new Set(comments.value.map((comment) => comment.author_id))];
+  await Promise.all(uniqueAuthorIds.map(fetchCommenterInfo));
+};
+
+const handleLike = async () => {
+  if (likeLoading.value || !currentUser.value) return;
+  try {
+    likeLoading.value = true;
+    if (!isLiked.value) {
+      await axios.post(`/api/posts/${props.post.post_id}/likes`);
+      likesCount.value++;
+      isLiked.value = true;
+    } else {
+      await axios.delete(`/api/posts/${props.post.post_id}/likes`);
+      likesCount.value--;
+      isLiked.value = false;
+    }
+  } catch (error) {
+    // If we get a duplicate key error, it means the user has already liked the post
+    if (error.response?.data?.message?.includes("duplicate key")) {
+      isLiked.value = true;
+    } else {
+      console.error("Error toggling like:", error);
+    }
+  } finally {
+    likeLoading.value = false;
+  }
+};
+
+const submitComment = async () => {
+  if (!newComment.value.trim() || commentLoading.value || !currentUser.value) return;
+  try {
+    commentLoading.value = true;
+    const response = await axios.post(`/api/posts/${props.post.post_id}/comments`, {
+      content: newComment.value.trim(),
+    });
+    if (response.data.success) {
+      const newCommentData = {
+        content: newComment.value.trim(),
+        created_at: new Date().toISOString(),
+        comment_id: response.data.comment_id,
+        author_id: currentUser.value.user_id,
+      };
+      comments.value.push(newCommentData);
+      // Fetch the commenter info if not already present
+      if (!commenters.value.has(currentUser.value.user_id)) {
+        await fetchCommenterInfo(currentUser.value.user_id);
+      }
+      newComment.value = "";
+    }
+  } catch (error) {
+    console.error("Error posting comment:", error);
+  } finally {
+    commentLoading.value = false;
+  }
+};
+
+const deleteComment = async (commentId) => {
+  if (!currentUser.value) return;
+  try {
+    await axios.delete(`/api/posts/${props.post.post_id}/comments/${commentId}`);
+    comments.value = comments.value.filter((c) => c.comment_id !== commentId);
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+  }
+};
+
+onMounted(async () => {
+  await Promise.all([fetchAuthorInfo(), fetchAllCommentersInfo()]);
+});
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -115,19 +209,114 @@ const formatDate = (dateString) => {
     </div>
 
     <footer class="mt-4 flex items-center gap-4 border-t pt-3">
-      <button class="flex items-center gap-2 text-gray-500 hover:text-blue-600">
-        <i class="fa-regular fa-heart" :class="{ 'fa-solid text-blue-600': post.likes?.length }"></i>
-        <span>{{ post.likes?.length || 0 }}</span>
+      <button
+        class="flex items-center gap-2 text-gray-500 hover:text-blue-600"
+        @click="handleLike"
+        :disabled="likeLoading"
+      >
+        <i
+          class="fa-heart"
+          :class="[isLiked ? 'fa-solid text-blue-600' : 'fa-regular', likeLoading ? 'opacity-50' : '']"
+        ></i>
+        <span>{{ likesCount }}</span>
       </button>
-      <button class="flex items-center gap-2 text-gray-500 hover:text-blue-600">
+      <button
+        class="flex items-center gap-2 text-gray-500 hover:text-blue-600"
+        @click="showComments = !showComments"
+      >
         <i class="fa-regular fa-comment"></i>
-        <span>{{ post.comments?.length || 0 }}</span>
+        <span>{{ comments.length }}</span>
       </button>
       <div v-if="post.tags?.length" class="ml-auto flex items-center gap-1 text-sm text-gray-500">
         <i class="fa-solid fa-user-tag"></i>
         <span>{{ post.tags.length }}</span>
       </div>
     </footer>
+
+    <!-- Comments Section -->
+    <div v-if="showComments" class="mt-4 border-t pt-4">
+      <div class="space-y-4">
+        <!-- Comment List -->
+        <div v-for="comment in comments" :key="comment.comment_id" class="flex gap-3">
+          <div class="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-gray-200">
+            <img
+              v-if="commenters.get(comment.author_id)?.profile?.profile_pic"
+              :src="`/meta${commenters.get(comment.author_id).profile.profile_pic}`"
+              :alt="commenters.get(comment.author_id)?.user?.first_name"
+              class="h-full w-full object-cover"
+              @error="
+                handleImageError(
+                  'profile picture',
+                  `/meta${commenters.get(comment.author_id).profile.profile_pic}`
+                )
+              "
+            />
+          </div>
+          <div class="flex-grow">
+            <div class="rounded-lg bg-gray-50 p-3">
+              <div class="mb-1">
+                <span class="font-medium text-sm">
+                  {{
+                    commenters.get(comment.author_id)?.user
+                      ? `${commenters.get(comment.author_id).user.first_name} ${
+                          commenters.get(comment.author_id).user.last_name
+                        }`
+                      : "Loading..."
+                  }}
+                </span>
+                <span
+                  v-if="commenters.get(comment.author_id)?.user?.nickname"
+                  class="text-xs text-gray-500 ml-1"
+                >
+                  ({{ commenters.get(comment.author_id).user.nickname }})
+                </span>
+              </div>
+              <p class="text-sm text-gray-800">{{ comment.content }}</p>
+            </div>
+            <div class="mt-1 flex items-center gap-4 text-xs text-gray-500">
+              <span>{{ formatDate(comment.created_at) }}</span>
+              <button
+                v-if="comment.author_id === currentUser?.user_id"
+                @click="deleteComment(comment.comment_id)"
+                class="text-red-500 hover:text-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- New Comment Form -->
+        <form @submit.prevent="submitComment" class="mt-4 flex gap-3">
+          <div class="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-gray-200">
+            <img
+              v-if="commenters.get(currentUser?.user_id)?.profile?.profile_pic"
+              :src="`/meta${commenters.get(currentUser?.user_id).profile.profile_pic}`"
+              :alt="commenters.get(currentUser?.user_id)?.user?.first_name"
+              class="h-full w-full object-cover"
+            />
+          </div>
+          <div class="flex-grow">
+            <div class="flex gap-2">
+              <input
+                v-model="newComment"
+                type="text"
+                placeholder="Write a comment..."
+                class="flex-grow rounded-full border bg-gray-50 px-4 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                :disabled="commentLoading"
+              />
+              <button
+                type="submit"
+                class="rounded-full bg-blue-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-50"
+                :disabled="!newComment.trim() || commentLoading"
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <slot name="actions"></slot>
   </article>
