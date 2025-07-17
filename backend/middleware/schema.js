@@ -1,71 +1,9 @@
-import { z } from "zod";
+import z from "zod";
 
-const allowedCities = [
-  "Dhaka",
-  "Faridpur",
-  "Gazipur",
-  "Gopalganj",
-  "Jamalpur",
-  "Kishoreganj",
-  "Madaripur",
-  "Manikganj",
-  "Munshiganj",
-  "Mymensingh",
-  "Narayanganj",
-  "Narsingdi",
-  "Netrokona",
-  "Rajbari",
-  "Shariatpur",
-  "Sherpur",
-  "Tangail",
-  "Bogra",
-  "Joypurhat",
-  "Naogaon",
-  "Natore",
-  "Nawabganj",
-  "Pabna",
-  "Rajshahi",
-  "Sirajgonj",
-  "Dinajpur",
-  "Gaibandha",
-  "Kurigram",
-  "Lalmonirhat",
-  "Nilphamari",
-  "Panchagarh",
-  "Rangpur",
-  "Thakurgaon",
-  "Barguna",
-  "Barisal",
-  "Bhola",
-  "Jhalokati",
-  "Patuakhali",
-  "Pirojpur",
-  "Bandarban",
-  "Brahmanbaria",
-  "Chandpur",
-  "Chittagong",
-  "Comilla",
-  "Cox''s Bazar",
-  "Feni",
-  "Khagrachari",
-  "Lakshmipur",
-  "Noakhali",
-  "Rangamati",
-  "Habiganj",
-  "Maulvibazar",
-  "Sunamganj",
-  "Sylhet",
-  "Bagerhat",
-  "Chuadanga",
-  "Jessore",
-  "Jhenaidah",
-  "Khulna",
-  "Kushtia",
-  "Magura",
-  "Meherpur",
-  "Narail",
-  "Satkhira",
-];
+export const LoginSchema = z.object({
+  student_id: z.number(),
+  password: z.string(),
+});
 
 export const RegisterSchema = z.object({
   first_name: z.string(),
@@ -93,26 +31,13 @@ export const RegisterSchema = z.object({
   password: z.string(),
   date_of_birth: z
     .string()
-    .regex(
-      /^(?:(?:19|20)\d\d)-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])$/,
-      "Must be in YYYY-MM-DD format"
-    ),
+    .regex(/^(?:(?:19|20)\d\d)-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])$/, "Must be in YYYY-MM-DD format"),
   gender: z.enum(["Male", "Female"]),
   residence_type: z.enum(["Resident", "Attached"]),
-  hall: z.enum(["AUH", "SWH", "SBH", "TH", "RH", "NH", "ShH", "SoH", "KNIH"]),
+  hall: z.enum(["AUH", "SWH", "SBH", "TH", "RH", "NH", "ShH", "SoH"]),
   room_no: z.string().optional(),
-
-  city_name: z.enum(allowedCities, {
-    errorMap: () => ({ message: "Please select a valid city from the list" }),
-  }),
+  city_name: z.string(),
 });
-
-
-export const LoginSchema = z.object({
-  student_id: z.number(),
-  password: z.string(),
-});
-
 
 export const UserSchema = RegisterSchema.extend({ password: RegisterSchema.shape.password.optional() });
 

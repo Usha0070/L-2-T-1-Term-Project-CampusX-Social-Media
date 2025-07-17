@@ -2,7 +2,7 @@
   "name": "campusx",
   "private": true,
   "scripts": {
-    "dev": "npm --prefix frontend run dev",
+    "dev": "npm --prefix frontend2 run dev",
     "build": "npm --prefix frontend run build",
     "preview": "npm --prefix frontend run preview",
     "server": "npm --prefix backend run server"
