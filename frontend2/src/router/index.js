@@ -2,26 +2,26 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
-import Home from "../views/Home.vue";
+import Feed from "../views/Feed.vue";
 
 const routes = [
-  {
-    path: "/",
-    name: "Home",
-    component: Home,
-    meta: { requiresAuth: true },
-  },
   {
     path: "/login",
     name: "Login",
     component: Login,
-    meta: { guest: true },
+    meta: { requiresAuth: false },
   },
   {
     path: "/register",
     name: "Register",
     component: Register,
-    meta: { guest: true },
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/",
+    name: "Feed",
+    component: Feed,
+    meta: { requiresAuth: true },
   },
 ];
 
@@ -30,13 +30,13 @@ const router = createRouter({
   routes,
 });
 
-// Navigation guard
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem("token");
+  const token = localStorage.getItem("token");
+  const hasAuthHeader = !!token;
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
+  if (to.meta.requiresAuth && !hasAuthHeader) {
     next("/login");
-  } else if (to.meta.guest && isAuthenticated) {
+  } else if (!to.meta.requiresAuth && hasAuthHeader) {
     next("/");
   } else {
     next();

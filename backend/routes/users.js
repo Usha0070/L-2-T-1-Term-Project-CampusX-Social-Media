@@ -81,6 +81,7 @@ router.get("/me/posts", async (req, res, next) => {
 router.get("/me/feed", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
+    console.log("Feed requested for user:", user_id);
     const posts = await db.getFeedByUserId(user_id);
     res.status(200).json(posts);
   } catch (err) {

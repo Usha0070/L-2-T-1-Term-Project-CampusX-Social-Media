@@ -230,9 +230,8 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
+import axios from "../utils/axios";
 
-// Form fields
 const first_name = ref("");
 const last_name = ref("");
 const nickname = ref("");
@@ -252,7 +251,6 @@ const error = ref("");
 const showPassword = ref(false);
 const router = useRouter();
 
-// Constants for dropdowns
 const departments = [
   "CSE",
   "EEE",
@@ -362,7 +360,6 @@ async function onSubmit() {
     const res = await axios.post("/api/auth/register", formData);
     const token = res.data.accessToken;
     localStorage.setItem("token", token);
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     router.push("/");
   } catch (err) {
     error.value = err.response?.data?.error || err.message || "Registration failed";

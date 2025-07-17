@@ -35,7 +35,7 @@ export const RegisterSchema = z.object({
   gender: z.enum(["Male", "Female"]),
   residence_type: z.enum(["Resident", "Attached"]),
   hall: z.enum(["AUH", "SWH", "SBH", "TH", "RH", "NH", "ShH", "SoH"]),
-  room_no: z.string().optional(),
+  room_no: z.string().optional().nullable(),
   city_name: z.string(),
 });
 

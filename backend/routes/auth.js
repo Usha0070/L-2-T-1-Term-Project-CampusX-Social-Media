@@ -34,11 +34,11 @@ router.post("/login", async (req, res, next) => {
     const body = schema.LoginSchema.parse(req.body);
     const hashed = await db.getHashedPasswordByStudentId(body.student_id);
     if (!hashed) {
-      return res.status(401).json({ error: "Access denied" });
+      return res.status(401).json({ error: "Invalid Student Id" });
     }
     const result = await bcrypt.compare(body.password, hashed);
     if (!result) {
-      return res.status(401).json({ error: "Access denied" });
+      return res.status(401).json({ error: "Wrong Password" });
     }
 
     const user_id = await db.getUserIdByStudentId(body.student_id);

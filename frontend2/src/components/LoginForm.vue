@@ -70,7 +70,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
+import axios from "../utils/axios";
 
 const student_id = ref(null);
 const password = ref("");
@@ -90,10 +90,8 @@ async function onSubmit() {
       student_id: student_id.value,
       password: password.value,
     });
-    // Save token and set default authorization header
     const token = res.data.accessToken;
     localStorage.setItem("token", token);
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     router.push("/");
   } catch (err) {
     error.value = err.response?.data?.error || err.message || "Login failed";
