@@ -231,6 +231,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import axios from "../utils/axios";
+import { setAuthData, setCurrentUser } from "../utils/auth";
 
 const first_name = ref("");
 const last_name = ref("");
@@ -358,8 +359,8 @@ async function onSubmit() {
     };
 
     const res = await axios.post("/api/auth/register", formData);
-    localStorage.setItem("user_id", res.data.user_id);
-    localStorage.setItem("token", res.data.accessToken);
+    setAuthData(res.data.user_id, res.data.accessToken);
+    setCurrentUser(res.data.user_id);
     router.push("/");
   } catch (err) {
     error.value = err.response?.data?.error || err.message || "Registration failed";

@@ -1,46 +1,52 @@
 import { createRouter, createWebHistory } from "vue-router";
-
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
 import Feed from "../views/Feed.vue";
-
-const routes = [
-  {
-    path: "/login",
-    name: "Login",
-    component: Login,
-    meta: { requiresAuth: false },
-  },
-  {
-    path: "/register",
-    name: "Register",
-    component: Register,
-    meta: { requiresAuth: false },
-  },
-  {
-    path: "/",
-    name: "Feed",
-    component: Feed,
-    meta: { requiresAuth: true },
-  },
-];
+import Profile from "../views/Profile.vue";
+import { getCurrentUserToken } from "../utils/auth";
 
 const router = createRouter({
   history: createWebHistory(),
-  routes,
+  routes: [
+    {
+      path: "/login",
+      name: "Login",
+      component: Login,
+    },
+    {
+      path: "/register",
+      name: "Register",
+      component: Register,
+    },
+    {
+      path: "/",
+      name: "Feed",
+      component: Feed,
+    },
+    {
+      path: "/profile/:id?",
+      name: "Profile",
+      component: Profile,
+      props: true,
+    },
+  ],
 });
 
+// Navigation guard
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem("token");
-  const hasAuthHeader = !!token;
+  const token = getCurrentUserToken();
+  const publicPages = ["/login", "/register"];
+  const authRequired = !publicPages.includes(to.path);
 
-  if (to.meta.requiresAuth && !hasAuthHeader) {
-    next("/login");
-  } else if (!to.meta.requiresAuth && hasAuthHeader) {
-    next("/");
-  } else {
-    next();
+  if (authRequired && !token) {
+    return next("/login");
   }
+
+  if (!authRequired && token) {
+    return next("/");
+  }
+
+  next();
 });
 
 export default router;

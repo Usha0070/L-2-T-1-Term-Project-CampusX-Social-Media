@@ -1,11 +1,11 @@
 <script setup>
 import { useRouter } from "vue-router";
+import { clearCurrentUser } from "../utils/auth";
 
 const router = useRouter();
 
 const handleLogout = () => {
-  localStorage.removeItem("user_id");
-  localStorage.removeItem("token");
+  clearCurrentUser();
   router.push("/login");
 };
 </script>

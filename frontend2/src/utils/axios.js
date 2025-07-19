@@ -1,32 +1,27 @@
 import axios from "axios";
+import { getCurrentUserToken, clearCurrentUser } from "./auth";
 
-const axiosInstance = axios.create();
+const instance = axios.create({
+  baseURL: "http://localhost:3000",
+});
 
-// Request interceptor
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+instance.interceptors.request.use((config) => {
+  const token = getCurrentUserToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
-// Response interceptor
-axiosInstance.interceptors.response.use(
+instance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem("token");
+      clearCurrentUser();
       window.location.href = "/login";
     }
     return Promise.reject(error);
   }
 );
 
-export default axiosInstance;
+export default instance;

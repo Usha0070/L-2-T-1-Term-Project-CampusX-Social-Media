@@ -71,6 +71,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import axios from "../utils/axios";
+import { setAuthData, setCurrentUser } from "../utils/auth";
 
 const student_id = ref(null);
 const password = ref("");
@@ -90,8 +91,9 @@ async function onSubmit() {
       student_id: student_id.value,
       password: password.value,
     });
-    localStorage.setItem("user_id", res.data.user_id);
-    localStorage.setItem("token", res.data.accessToken);
+
+    setAuthData(res.data.user_id, res.data.accessToken);
+    setCurrentUser(res.data.user_id);
     router.push("/");
   } catch (err) {
     error.value = err.response?.data?.error || err.message || "Login failed";

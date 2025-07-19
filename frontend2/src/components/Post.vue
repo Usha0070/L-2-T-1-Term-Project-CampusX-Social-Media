@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import axios from "../utils/axios";
+import { getCurrentUserId } from "../utils/auth";
 
 const props = defineProps({
   post: {
@@ -17,9 +18,9 @@ const newComment = ref("");
 const comments = ref(props.post.comments || []);
 const commentLoading = ref(false);
 const likeLoading = ref(false);
-const commenters = ref(new Map()); // Store commenter info
+const commenters = ref(new Map());
 const currentUser = ref({
-  user_id: parseInt(localStorage.getItem("user_id")) || null,
+  user_id: getCurrentUserId() || null,
 });
 const isLiked = ref(props.post.likes?.some((like) => like.user_id === currentUser.value?.user_id) || false);
 
