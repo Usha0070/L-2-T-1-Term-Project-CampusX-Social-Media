@@ -10,6 +10,7 @@ const menuItems = ref([
   { name: "Notifications", path: "/notifications", icon: "fa-solid fa-bell" },
   { name: "Marketplace", path: "/marketplace", icon: "fa-solid fa-shop" },
   { name: "Tuition", path: "/tuition", icon: "fa-solid fa-book" },
+  { name: "Chats", path: "/chats", icon: "fa-solid fa-message" },
 ]);
 </script>
 

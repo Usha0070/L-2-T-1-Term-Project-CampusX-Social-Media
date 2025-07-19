@@ -3,6 +3,9 @@ import { ref, onMounted, watch, computed } from "vue";
 import axios from "../utils/axios";
 import Post from "../components/Post.vue";
 import { getCurrentUserId } from "../utils/auth";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const props = defineProps({
   id: {
@@ -85,6 +88,19 @@ const sendFriendRequest = () => handleFriendAction("req_sent");
 const acceptFriendRequest = () => handleFriendAction("req_accept");
 const declineFriendRequest = () => handleFriendAction("req_delete");
 const unfriend = () => handleFriendAction("unfriend");
+
+const startChat = async () => {
+  try {
+    const response = await axios.get(`/api/chats/with/${props.id}`);
+    if (response.data?.chat_id) {
+      router.push(`/chats/${response.data.chat_id}`);
+    } else {
+      console.error("No chat ID received");
+    }
+  } catch (error) {
+    console.error("Error starting chat:", error);
+  }
+};
 
 const fetchFriendInfo = async (userId) => {
   try {
@@ -274,6 +290,15 @@ onMounted(async () => {
 
             <!-- Relationship Actions -->
             <div v-if="!isOwnProfile" class="flex gap-2">
+              <!-- Message Button - Always show for other profiles -->
+              <button
+                @click="startChat"
+                class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
+              >
+                <i class="fa-solid fa-message"></i>
+                Message
+              </button>
+
               <!-- Friend -->
               <button
                 v-if="relationshipStatus === 'friend'"

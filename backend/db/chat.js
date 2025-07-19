@@ -12,6 +12,34 @@ export async function getChatsByUserId(user_id) {
   return chats;
 }
 
+export async function getPartnerIdWithChatId(user_id, chat_id) {
+  const result = await sql`
+    SELECT 
+    CASE
+        WHEN user1_id = ${user_id} THEN user2_id ELSE user1_id
+    END AS partner_id
+    FROM chat
+    WHERE chat_id = ${chat_id}
+  `;
+  return result[0];
+}
+
+export async function getChatIdWithPartnerId(user_id, partner_id) {
+  const chat = await sql`
+    SELECT chat_id, last_message_at,
+    CASE
+        WHEN user1_id = ${user_id} THEN user2_id ELSE user1_id
+    END AS partner_id
+    FROM chat
+    WHERE (user1_id = ${user_id} AND user2_id = ${partner_id}) OR (user1_id = ${partner_id} AND user2_id = ${user_id})
+  `;
+  if (chat.length == 0) {
+    await createChat({ user1_id: user_id, user2_id: partner_id });
+    return await getChatIdWithPartnerId(user_id, partner_id);
+  }
+  return chat[0];
+}
+
 export async function checkUserIdChatId(user_id, chat_id) {
   const result = await sql`
     SELECT 1 FROM chat

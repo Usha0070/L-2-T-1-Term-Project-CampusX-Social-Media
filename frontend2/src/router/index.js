@@ -8,6 +8,8 @@ import Marketplace from "../views/Marketplace.vue";
 import Tuition from "../views/Tuition.vue";
 import Notifications from "../views/Notifications.vue";
 import Post from "../views/Post.vue";
+import Chats from "../views/Chats.vue";
+import ChatDetail from "../views/ChatDetail.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -52,6 +54,18 @@ const router = createRouter({
       path: "/post/:id",
       name: "post",
       component: Post,
+    },
+    {
+      path: "/chats",
+      name: "chats",
+      component: Chats,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/chats/:id",
+      name: "chat-detail",
+      component: ChatDetail,
+      meta: { requiresAuth: true },
     },
   ],
 });

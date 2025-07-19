@@ -44,6 +44,30 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
+// get chat id with partner id
+router.get("/with/:id", async (req, res, next) => {
+  try {
+    const user_id = req.user.user_id;
+    const partner_id = req.params.id;
+    const chat = await db.getChatIdWithPartnerId(user_id, partner_id);
+    res.status(200).json(chat);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// get partner id with chat id
+router.get("/partner/:id", async (req, res, next) => {
+  try {
+    const user_id = req.user.user_id;
+    const chat_id = req.params.id;
+    const chat = await db.getPartnerIdWithChatId(user_id, chat_id);
+    res.status(200).json(chat);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post("/:id", async (req, res, next) => {
   try {
     const body = {
