@@ -6,6 +6,8 @@ import Profile from "../views/Profile.vue";
 import { getCurrentUserToken } from "../utils/auth";
 import Marketplace from "../views/Marketplace.vue";
 import Tuition from "../views/Tuition.vue";
+import Notifications from "../views/Notifications.vue";
+import Post from "../views/Post.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +42,16 @@ const router = createRouter({
       path: "/tuition",
       name: "tuition",
       component: Tuition,
+    },
+    {
+      path: "/notifications",
+      name: "notifications",
+      component: Notifications,
+    },
+    {
+      path: "/post/:id",
+      name: "post",
+      component: Post,
     },
   ],
 });

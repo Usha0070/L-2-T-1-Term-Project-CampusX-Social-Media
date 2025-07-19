@@ -5,7 +5,9 @@ import { createMarketPost, createTuitionPost } from "./post2.js";
 import { getFriendsByUserId } from "./friend.js";
 
 export async function getPostByPostId(post_id) {
-  const postIds = Array.isArray(post_id) ? post_id : [post_id];
+  let postIds = Array.isArray(post_id) ? post_id : [post_id];
+  postIds = postIds.filter((id) => id !== null && id !== undefined && id !== "");
+  if (postIds.length === 0) return [];
   // using sql function
   const [result] = await sql`
     SELECT get_posts_by_ids(ARRAY[${sql.array(postIds)}]::int[]) AS posts
@@ -23,18 +25,34 @@ export async function getPostsByUserId(user_id) {
 }
 
 export async function getFeedByUserId(user_id, limit = 20, offset = 0) {
-  const friends = await getFriendsByUserId(user_id);
-  const userIds = [...friends.friends.map((friend) => friend.user_id), user_id];
-  const ids = await sql`
-    SELECT DISTINCT post_id FROM post_tag
-    WHERE user_id = ANY(${userIds})
-    ORDER BY post_id DESC
-  `;
-  const allPostIds = ids.map((id) => id.post_id);
-  const paginatedIds = allPostIds.slice(offset, offset + limit);
-  const posts = await getPostByPostId(paginatedIds);
+  try {
+    const friends = await getFriendsByUserId(user_id);
+    const friendIds = friends?.friends?.map((friend) => friend.user_id) || [];
+    const userIds = [...friendIds, user_id];
 
-  return posts;
+    const ids = await sql`
+      SELECT DISTINCT post_id FROM post_tag
+      WHERE user_id = ANY(${userIds})
+      ORDER BY post_id DESC
+    `;
+
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+
+    const allPostIds = ids.map((id) => id.post_id);
+    const paginatedIds = allPostIds.slice(offset, offset + limit);
+
+    if (paginatedIds.length === 0) {
+      return [];
+    }
+
+    const posts = await getPostByPostId(paginatedIds);
+    return posts || [];
+  } catch (error) {
+    console.error("Error in getFeedByUserId:", error);
+    return [];
+  }
 }
 
 async function insertPostTag(postData, post_id, tx) {
