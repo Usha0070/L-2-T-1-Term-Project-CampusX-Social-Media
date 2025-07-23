@@ -12,6 +12,7 @@ import Chats from "../views/Chats.vue";
 import ChatDetail from "../views/ChatDetail.vue";
 import Groups from "../views/Groups.vue";
 import GroupDetail from "../views/GroupDetail.vue";
+import Search from "../views/Search.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -51,6 +52,15 @@ const router = createRouter({
       path: "/notifications",
       name: "notifications",
       component: Notifications,
+    },
+    {
+      path: "/search",
+      name: "search",
+      component: Search,
+      meta: {
+        requiresAuth: true,
+        keepAlive: true, // Add this to mark component for KeepAlive
+      },
     },
     {
       path: "/post/:id",

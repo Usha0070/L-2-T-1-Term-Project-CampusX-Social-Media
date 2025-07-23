@@ -12,6 +12,7 @@ import groupsRouter from "./routes/groups.js";
 import chatsRouter from "./routes/chats.js";
 import notificationsRouter from "./routes/notifications.js";
 import statsRouter from "./routes/stats.js";
+import searchRouter from "./routes/search.js";
 
 const port = process.env.SERVER_PORT || 5000;
 const app = express();
@@ -32,6 +33,7 @@ app.use("/groups", authenticate, groupsRouter);
 app.use("/chats", authenticate, chatsRouter);
 app.use("/notifications", authenticate, notificationsRouter);
 app.use("/stats", authenticate, authenticateAdmin, statsRouter);
+app.use("/search", authenticate, searchRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

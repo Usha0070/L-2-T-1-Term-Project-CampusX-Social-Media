@@ -13,7 +13,7 @@ export async function getUserIdByStudentId(student_id) {
 
 export async function getUserByUserId(user_id) {
   const [user] = await sql`
-    SELECT first_name, last_name, nickname, student_id, batch, department, email, phone,
+    SELECT "user".user_id, first_name, last_name, nickname, student_id, batch, department, email, phone,
       date_of_birth, gender, type AS residence_type, hall, room_no, name AS city_name 
     FROM "user"
     JOIN address ON address.address_id = "user".address_id 

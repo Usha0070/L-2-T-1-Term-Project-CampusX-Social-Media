@@ -156,6 +156,12 @@ const fetchUserData = async () => {
       currentUserId.value = getCurrentUserId();
     }
 
+    // Check if the provided ID matches current user's ID
+    if (props.id && String(currentUserId.value) === props.id) {
+      router.replace("/profile"); // Redirect to /profile without ID
+      return;
+    }
+
     const userId = props.id || "me";
     isOwnProfile.value = !props.id || userId === "me" || userId === currentUserId.value;
 

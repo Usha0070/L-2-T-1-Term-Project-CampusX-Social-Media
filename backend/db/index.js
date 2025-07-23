@@ -6,3 +6,4 @@ export * from "./chat.js";
 export * from "./notification.js";
 export * from "./media.js";
 export * from "./stat.js";
+export * from "./search.js";
