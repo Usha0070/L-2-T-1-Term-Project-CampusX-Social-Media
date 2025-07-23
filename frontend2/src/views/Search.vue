@@ -2,8 +2,8 @@
 import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import axios from "../utils/axios";
-import Post from "../components/Post.vue";
 import GroupCard from "../components/GroupCard.vue";
+import PostSearchCard from "../components/PostSearchCard.vue";
 
 const router = useRouter();
 const searchQuery = ref("");
@@ -215,7 +215,9 @@ watch(selectedFilters, performSearch);
       <!-- Posts Results -->
       <div v-if="selectedFilters.includes('posts') && results.posts.length > 0" class="space-y-4">
         <h2 class="text-xl font-semibold">Posts</h2>
-        <Post v-for="post in results.posts" :key="post.post_id" :post="post" />
+        <div class="space-y-4">
+          <PostSearchCard v-for="post in results.posts" :key="post.post_id" :post="post" />
+        </div>
       </div>
     </div>
   </div>
