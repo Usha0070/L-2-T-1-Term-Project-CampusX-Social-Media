@@ -14,6 +14,15 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+router.get("/joined", async (req, res, next) => {
+  try {
+    const groups = await db.getGroupsJoinedByUserId(req.user.user_id);
+    res.status(200).json(groups);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post(
   "/",
   upload.fields([

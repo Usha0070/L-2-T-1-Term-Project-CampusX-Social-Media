@@ -8,6 +8,7 @@ const menuItems = ref([
   { name: "Profile", path: "/profile", icon: "fa-solid fa-user" },
   { name: "Search", path: "/search", icon: "fa-solid fa-magnifying-glass" },
   { name: "Notifications", path: "/notifications", icon: "fa-solid fa-bell" },
+  { name: "Groups", path: "/groups", icon: "fa-solid fa-users" },
   { name: "Marketplace", path: "/marketplace", icon: "fa-solid fa-shop" },
   { name: "Tuition", path: "/tuition", icon: "fa-solid fa-book" },
   { name: "Chats", path: "/chats", icon: "fa-solid fa-message" },

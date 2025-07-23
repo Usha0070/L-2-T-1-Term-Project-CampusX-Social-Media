@@ -12,6 +12,13 @@ export async function getGroups() {
   return groups;
 }
 
+export async function getGroupsJoinedByUserId(user_id) {
+  const groups = await sql`
+    SELECT group_id FROM group_member WHERE user_id = ${user_id}
+  `;
+  return groups;
+}
+
 export async function getGroupByGroupId(group_id) {
   const [group] = await sql`
     SELECT g.group_id, g.name, g.description, g.created_at, g.creator_id, g.admin_id, 

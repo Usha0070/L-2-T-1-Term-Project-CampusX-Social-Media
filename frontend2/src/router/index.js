@@ -10,6 +10,8 @@ import Notifications from "../views/Notifications.vue";
 import Post from "../views/Post.vue";
 import Chats from "../views/Chats.vue";
 import ChatDetail from "../views/ChatDetail.vue";
+import Groups from "../views/Groups.vue";
+import GroupDetail from "../views/GroupDetail.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -65,6 +67,18 @@ const router = createRouter({
       path: "/chats/:id",
       name: "chat-detail",
       component: ChatDetail,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/groups",
+      name: "Groups",
+      component: Groups,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/groups/:id",
+      name: "GroupDetail",
+      component: GroupDetail,
       meta: { requiresAuth: true },
     },
   ],

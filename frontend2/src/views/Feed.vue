@@ -79,7 +79,7 @@ onMounted(() => {
 
     <!-- Posts list -->
     <div v-else class="space-y-4">
-      <Post v-for="post in posts" :key="post.id" :post="post">
+      <Post v-for="post in posts" :key="post.post_id" :post="post">
         <template #actions>
           <!-- Additional actions can be added here -->
         </template>
