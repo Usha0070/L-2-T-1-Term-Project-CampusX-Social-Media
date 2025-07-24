@@ -358,9 +358,9 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row gap-8 relative">
+        <div class="flex flex-col lg:flex-row gap-8 relative" :class="{ 'lg:justify-center': !isOwnProfile }">
           <!-- Main Content Area -->
-          <div class="w-full lg:w-[768px] flex-none">
+          <div class="w-full lg:w-[768px] flex-none" :class="{ 'lg:w-[900px]': !isOwnProfile }">
             <!-- Posts Section -->
             <div class="space-y-4">
               <h2 class="text-xl font-semibold">Posts</h2>
@@ -379,8 +379,8 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- Right Sidebar -->
-          <div class="lg:w-80 flex-shrink-0 lg:absolute lg:right-0">
+          <!-- Right Sidebar - Only show for own profile -->
+          <div v-if="isOwnProfile" class="lg:w-80 flex-shrink-0 lg:absolute lg:right-0">
             <div class="bg-white rounded-lg shadow p-6 sticky top-6">
               <!-- Friends Section -->
               <div class="space-y-6">

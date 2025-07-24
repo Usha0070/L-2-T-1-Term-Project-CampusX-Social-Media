@@ -1,10 +1,20 @@
 <script setup>
-defineProps({
+import { useRouter } from "vue-router";
+import axios from "../utils/axios";
+
+const router = useRouter();
+
+const props = defineProps({
   post: {
     type: Object,
     required: true,
   },
 });
+
+const goToChat = async () => {
+  const response = await axios.get(`/api/chats/with/${props.post.author_id}`);
+  router.push(`/chats/${response.data.chat_id}`);
+};
 </script>
 
 <template>
@@ -60,6 +70,7 @@ defineProps({
     <!-- Action Button - Fixed at bottom -->
     <div class="p-4 pt-0">
       <button
+        @click="goToChat"
         class="w-full rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
       >
         Contact Seller

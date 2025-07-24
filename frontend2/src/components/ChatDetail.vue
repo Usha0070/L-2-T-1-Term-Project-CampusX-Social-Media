@@ -29,7 +29,6 @@ const fetchPartnerInfo = async () => {
       ...userResponse.data,
       profile: profileResponse.data,
     };
-    console.log(partner.value);
   } catch (error) {
     console.error("Error fetching partner info:", error);
   }
@@ -89,7 +88,10 @@ const handleImageError = (type, path) => {
 
 const scrollToBottom = () => {
   if (messageContainer.value) {
-    messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
+    messageContainer.value.scrollTo({
+      top: messageContainer.value.scrollHeight,
+      behavior: "smooth",
+    });
   }
 };
 
