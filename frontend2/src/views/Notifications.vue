@@ -149,62 +149,67 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">Notifications</h1>
-      <button
-        @click="fetchNotifications"
-        class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800"
-      >
-        <i class="fa-solid fa-rotate-right mr-2"></i>
-        Refresh
-      </button>
-    </div>
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Main Content Area - Centered -->
+    <div class="w-full lg:w-[768px] mx-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Notifications</h1>
+        <button
+          @click="fetchNotifications"
+          class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+        >
+          <i class="fa-solid fa-rotate-right mr-2"></i>
+          Refresh
+        </button>
+      </div>
 
-    <div v-if="loading" class="flex justify-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
+      <div v-if="loading" class="flex justify-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
 
-    <div v-else-if="notifications.length === 0" class="text-center text-gray-500">No notifications yet</div>
+      <div v-else-if="notifications.length === 0" class="text-center py-8 text-gray-500">
+        No notifications yet
+      </div>
 
-    <div v-else class="space-y-4">
-      <div
-        v-for="group in groupedNotifications"
-        :key="group.type + (group.postId || group.notifications[0].notification_id)"
-        class="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
-        :class="{
-          'bg-blue-50': group.notifications.some((n) => !n.is_read),
-          'hover:bg-gray-50': !group.notifications.some((n) => !n.is_read),
-          'hover:bg-blue-100': group.notifications.some((n) => !n.is_read),
-        }"
-        @click="handleNotificationClick(group)"
-      >
-        <div class="flex items-start gap-4">
-          <div class="flex-shrink-0">
-            <i
-              :class="{
-                'fa-solid fa-heart text-red-500': group.type === 'post_like',
-                'fa-solid fa-comment text-blue-500': group.type === 'post_comment',
-                'fa-solid fa-user-plus text-green-500':
-                  group.type === 'friend_req_received' || group.type === 'friend_req_accepted',
-                'fa-solid fa-share text-purple-500': group.type === 'post_share',
-                'fa-solid fa-tag text-yellow-500': group.type === 'post_tag',
-              }"
-              class="text-xl"
-            ></i>
-          </div>
-          <div class="flex-grow">
-            <p class="text-gray-800">
-              <span class="font-semibold">{{ formatUserList(group.users) }}</span>
-              {{ getNotificationText(group.type) }}
-              <span v-if="group.postId" class="text-gray-500"> • Click to view post </span>
-              <span v-else-if="group.type.includes('friend_req')" class="text-gray-500">
-                • Click to view profile
-              </span>
-            </p>
-            <p class="text-sm text-gray-500 mt-1">
-              {{ formatTimeAgo(group.created_at) }}
-            </p>
+      <div v-else class="space-y-4">
+        <div
+          v-for="group in groupedNotifications"
+          :key="group.type + (group.postId || group.notifications[0].notification_id)"
+          class="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
+          :class="{
+            'bg-blue-50': group.notifications.some((n) => !n.is_read),
+            'hover:bg-gray-50': !group.notifications.some((n) => !n.is_read),
+            'hover:bg-blue-100': group.notifications.some((n) => !n.is_read),
+          }"
+          @click="handleNotificationClick(group)"
+        >
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+              <i
+                :class="{
+                  'fa-solid fa-heart text-red-500': group.type === 'post_like',
+                  'fa-solid fa-comment text-blue-500': group.type === 'post_comment',
+                  'fa-solid fa-user-plus text-green-500':
+                    group.type === 'friend_req_received' || group.type === 'friend_req_accepted',
+                  'fa-solid fa-share text-purple-500': group.type === 'post_share',
+                  'fa-solid fa-tag text-yellow-500': group.type === 'post_tag',
+                }"
+                class="text-xl"
+              ></i>
+            </div>
+            <div class="flex-grow">
+              <p class="text-gray-800">
+                <span class="font-semibold">{{ formatUserList(group.users) }}</span>
+                {{ getNotificationText(group.type) }}
+                <span v-if="group.postId" class="text-gray-500"> • Click to view post </span>
+                <span v-else-if="group.type.includes('friend_req')" class="text-gray-500">
+                  • Click to view profile
+                </span>
+              </p>
+              <p class="text-sm text-gray-500 mt-1">
+                {{ formatTimeAgo(group.created_at) }}
+              </p>
+            </div>
           </div>
         </div>
       </div>

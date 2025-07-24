@@ -1,30 +1,35 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h2 class="text-2xl font-bold mb-4">My Groups</h2>
-      <div v-if="myGroups.length" class="space-y-2">
-        <GroupCard
-          v-for="group in myGroups"
-          :key="group.group_id"
-          :group="group"
-          :is-member="true"
-          @click="goToGroup(group.group_id)"
-        />
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Main Content Area - Centered -->
+    <div class="w-full lg:w-[768px] mx-auto">
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">My Groups</h2>
+        <div v-if="myGroups.length" class="space-y-4">
+          <GroupCard
+            v-for="group in myGroups"
+            :key="group.group_id"
+            :group="group"
+            :is-member="true"
+            @click="goToGroup(group.group_id)"
+          />
+        </div>
+        <div v-else class="rounded-lg bg-gray-50 p-8 text-center">
+          <p class="text-gray-500">You haven't joined any groups yet.</p>
+        </div>
       </div>
-      <p v-else class="text-gray-500">You haven't joined any groups yet.</p>
-    </div>
 
-    <div>
-      <h2 class="text-2xl font-bold mb-4">All Groups</h2>
-      <div class="space-y-2">
-        <GroupCard
-          v-for="group in allGroups"
-          :key="group.group_id"
-          :group="group"
-          :is-member="isGroupMember(group.group_id)"
-          @join="joinGroup(group.group_id)"
-          @click="goToGroup(group.group_id)"
-        />
+      <div>
+        <h2 class="text-2xl font-bold mb-4">All Groups</h2>
+        <div class="space-y-4">
+          <GroupCard
+            v-for="group in allGroups"
+            :key="group.group_id"
+            :group="group"
+            :is-member="isGroupMember(group.group_id)"
+            @join="joinGroup(group.group_id)"
+            @click="goToGroup(group.group_id)"
+          />
+        </div>
       </div>
     </div>
   </div>

@@ -232,275 +232,292 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container mx-auto max-w-5xl px-4 py-6">
-    <!-- Loading State -->
-    <div v-if="Object.values(loading).some(Boolean)" class="space-y-4">
-      <div class="h-64 animate-pulse rounded-lg bg-gray-200"></div>
-      <div class="h-32 animate-pulse rounded-lg bg-gray-200"></div>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error" class="rounded-lg bg-red-50 p-4 text-center text-red-600">
-      {{ error }}
-      <button @click="fetchUserData" class="mt-2 text-sm font-medium text-red-700 hover:text-red-800">
-        Try again
-      </button>
-    </div>
-
-    <!-- Profile Content -->
-    <div v-else class="space-y-6">
-      <!-- Cover Photo -->
-      <div class="relative h-64 overflow-hidden rounded-lg bg-gray-200">
-        <img
-          v-if="profile?.cover_photo"
-          :src="`/meta${profile.cover_photo}`"
-          class="h-full w-full object-cover"
-          alt="Cover photo"
-        />
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="lg:ml-20">
+      <!-- Loading State -->
+      <div v-if="Object.values(loading).some(Boolean)" class="space-y-4">
+        <div class="h-64 animate-pulse rounded-lg bg-gray-200"></div>
+        <div class="h-32 animate-pulse rounded-lg bg-gray-200"></div>
       </div>
 
-      <!-- Profile Info -->
-      <div class="relative">
-        <div class="absolute -top-16 left-8">
-          <div class="h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-white shadow-lg">
-            <img
-              v-if="profile?.profile_pic"
-              :src="`/meta${profile.profile_pic}`"
-              class="h-full w-full object-cover"
-              alt="Profile picture"
-            />
-          </div>
+      <!-- Error State -->
+      <div v-else-if="error" class="rounded-lg bg-red-50 p-4 text-center text-red-600">
+        {{ error }}
+        <button @click="fetchUserData" class="mt-2 text-sm font-medium text-red-700 hover:text-red-800">
+          Try again
+        </button>
+      </div>
+
+      <!-- Profile Content -->
+      <div v-else class="space-y-6">
+        <!-- Cover Photo -->
+        <div class="relative h-64 overflow-hidden rounded-lg bg-gray-200">
+          <img
+            v-if="profile?.cover_photo"
+            :src="`/meta${profile.cover_photo}`"
+            class="h-full w-full object-cover"
+            alt="Cover photo"
+          />
         </div>
 
-        <div class="ml-44 pt-4">
-          <div class="flex justify-between items-start">
-            <div>
-              <h1 class="text-2xl font-bold">
-                {{ user ? `${user.first_name} ${user.last_name}` : "Loading..." }}
-                <span v-if="user?.nickname" class="text-lg font-normal text-gray-500"
-                  >({{ user.nickname }})</span
-                >
-              </h1>
-              <div class="mt-2 flex gap-4 text-gray-600">
-                <div>
-                  <i class="fa-solid fa-graduation-cap mr-2"></i>
-                  <span>{{ user?.department }} {{ user?.batch }}</span>
-                </div>
-                <div>
-                  <i class="fa-solid fa-id-card mr-2"></i>
-                  <span>{{ user?.student_id }}</span>
-                </div>
-              </div>
-              <p v-if="profile?.bio" class="mt-4 text-gray-600">{{ profile.bio }}</p>
+        <!-- Profile Info -->
+        <div class="relative">
+          <div class="absolute -top-16 left-8">
+            <div class="h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-white shadow-lg">
+              <img
+                v-if="profile?.profile_pic"
+                :src="`/meta${profile.profile_pic}`"
+                class="h-full w-full object-cover"
+                alt="Profile picture"
+              />
             </div>
+          </div>
 
-            <!-- Relationship Actions -->
-            <div v-if="!isOwnProfile" class="flex gap-2">
-              <!-- Message Button - Always show for other profiles -->
-              <button
-                @click="startChat"
-                class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
-              >
-                <i class="fa-solid fa-message"></i>
-                Message
-              </button>
+          <div class="ml-44 pt-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <h1 class="text-2xl font-bold">
+                  {{ user ? `${user.first_name} ${user.last_name}` : "Loading..." }}
+                  <span v-if="user?.nickname" class="text-lg font-normal text-gray-500"
+                    >({{ user.nickname }})</span
+                  >
+                </h1>
+                <div class="mt-2 flex gap-4 text-gray-600">
+                  <div>
+                    <i class="fa-solid fa-graduation-cap mr-2"></i>
+                    <span>{{ user?.department }} {{ user?.batch }}</span>
+                  </div>
+                  <div>
+                    <i class="fa-solid fa-id-card mr-2"></i>
+                    <span>{{ user?.student_id }}</span>
+                  </div>
+                </div>
+                <p v-if="profile?.bio" class="mt-4 text-gray-600">{{ profile.bio }}</p>
+              </div>
 
-              <!-- Friend -->
-              <button
-                v-if="relationshipStatus === 'friend'"
-                @click="unfriend"
-                class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
-              >
-                <i class="fa-solid fa-user-minus"></i>
-                Unfriend
-              </button>
-
-              <!-- Request Sent -->
-              <button
-                v-else-if="relationshipStatus === 'request_sent'"
-                disabled
-                class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-500"
-              >
-                <i class="fa-solid fa-clock"></i>
-                Request Sent
-              </button>
-
-              <!-- Request Received -->
-              <div v-else-if="relationshipStatus === 'request_received'" class="flex gap-2">
+              <!-- Relationship Actions -->
+              <div v-if="!isOwnProfile" class="flex gap-2">
+                <!-- Message Button - Always show for other profiles -->
                 <button
-                  @click="acceptFriendRequest"
-                  class="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
-                >
-                  <i class="fa-solid fa-user-check"></i>
-                  Accept
-                </button>
-                <button
-                  @click="declineFriendRequest"
+                  @click="startChat"
                   class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
                 >
-                  <i class="fa-solid fa-user-xmark"></i>
-                  Decline
+                  <i class="fa-solid fa-message"></i>
+                  Message
                 </button>
-              </div>
 
-              <!-- No Relationship -->
-              <button
-                v-else
-                @click="sendFriendRequest"
-                class="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
-              >
-                <i class="fa-solid fa-user-plus"></i>
-                Add Friend
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid gap-6" :class="{ 'grid-cols-3': isOwnProfile, 'grid-cols-1': !isOwnProfile }">
-        <!-- Posts Section -->
-        <div :class="{ 'col-span-2': isOwnProfile }" class="space-y-4">
-          <h2 class="text-xl font-semibold">Posts</h2>
-          <Post v-for="post in posts" :key="post.post_id" :post="post" />
-          <div v-if="posts.length === 0" class="rounded-lg bg-gray-50 p-8 text-center">
-            <i class="fa-regular fa-newspaper mb-2 text-4xl text-gray-400"></i>
-            <h3 class="text-lg font-medium text-gray-700">No posts yet</h3>
-            <p class="mt-1 text-gray-500">
-              {{
-                isOwnProfile ? "Share something with your friends!" : "This user hasn't posted anything yet."
-              }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Friends Section - Only shown on own profile -->
-        <div v-if="isOwnProfile" class="space-y-6">
-          <!-- Friends List -->
-          <div>
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-semibold">Friends</h2>
-              <span class="text-sm text-gray-500">{{ profileFriends.friends?.length || 0 }} friends</span>
-            </div>
-            <div class="mt-4 space-y-4">
-              <div
-                v-for="friend in profileFriends.friends"
-                :key="friend.user_id"
-                class="flex items-center gap-3"
-              >
-                <router-link
-                  :to="`/profile/${friend.user_id}`"
-                  class="flex items-center gap-3 flex-grow hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                <!-- Friend -->
+                <button
+                  v-if="relationshipStatus === 'friend'"
+                  @click="unfriend"
+                  class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
                 >
-                  <div class="h-10 w-10 overflow-hidden rounded-full bg-gray-200">
-                    <img
-                      v-if="friendsInfo.get(friend.user_id)?.profile_pic"
-                      :src="`/meta${friendsInfo.get(friend.user_id).profile_pic}`"
-                      :alt="friendsInfo.get(friend.user_id)?.first_name"
-                      class="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div class="flex-grow">
-                    <p class="font-medium text-gray-900 hover:text-blue-600">
-                      {{ friendsInfo.get(friend.user_id)?.first_name }}
-                      {{ friendsInfo.get(friend.user_id)?.last_name }}
-                    </p>
-                    <p class="text-sm text-gray-500">
-                      {{ friendsInfo.get(friend.user_id)?.department }}
-                      <span class="mx-1">·</span>
-                      <span>Friends since {{ formatDate(friend.since) }}</span>
-                    </p>
-                  </div>
-                </router-link>
-              </div>
-              <div v-if="!profileFriends.friends?.length" class="rounded-lg bg-gray-50 p-4 text-center">
-                <p class="text-gray-500">No friends yet</p>
-              </div>
-            </div>
-          </div>
+                  <i class="fa-solid fa-user-minus"></i>
+                  Unfriend
+                </button>
 
-          <!-- Friend Requests Sent -->
-          <div v-if="profileFriends.friend_requests_sent?.length">
-            <h3 class="text-lg font-semibold">Sent Requests</h3>
-            <div class="mt-4 space-y-4">
-              <div
-                v-for="request in profileFriends.friend_requests_sent"
-                :key="request.user_id"
-                class="flex items-center gap-3"
-              >
-                <router-link
-                  :to="`/profile/${request.user_id}`"
-                  class="flex items-center gap-3 flex-grow hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                <!-- Request Sent -->
+                <button
+                  v-else-if="relationshipStatus === 'request_sent'"
+                  disabled
+                  class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-500"
                 >
-                  <div class="h-10 w-10 overflow-hidden rounded-full bg-gray-200">
-                    <img
-                      v-if="friendsInfo.get(request.user_id)?.profile_pic"
-                      :src="`/meta${friendsInfo.get(request.user_id).profile_pic}`"
-                      :alt="friendsInfo.get(request.user_id)?.first_name"
-                      class="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div class="flex-grow">
-                    <p class="font-medium text-gray-900 hover:text-blue-600">
-                      {{ friendsInfo.get(request.user_id)?.first_name }}
-                      {{ friendsInfo.get(request.user_id)?.last_name }}
-                    </p>
-                    <p class="text-sm text-gray-500">
-                      {{ friendsInfo.get(request.user_id)?.department }}
-                      <span class="mx-1">·</span>
-                      <span>Sent {{ formatDate(request.since) }}</span>
-                    </p>
-                  </div>
-                </router-link>
-              </div>
-            </div>
-          </div>
+                  <i class="fa-solid fa-clock"></i>
+                  Request Sent
+                </button>
 
-          <!-- Friend Requests Received -->
-          <div v-if="profileFriends.friend_requests_received?.length">
-            <h3 class="text-lg font-semibold">Friend Requests</h3>
-            <div class="mt-4 space-y-4">
-              <div
-                v-for="request in profileFriends.friend_requests_received"
-                :key="request.user_id"
-                class="flex items-center gap-3"
-              >
-                <router-link
-                  :to="`/profile/${request.user_id}`"
-                  class="flex items-center gap-3 flex-grow hover:bg-gray-50 p-2 rounded-lg transition-colors"
-                >
-                  <div class="h-10 w-10 overflow-hidden rounded-full bg-gray-200">
-                    <img
-                      v-if="friendsInfo.get(request.user_id)?.profile_pic"
-                      :src="`/meta${friendsInfo.get(request.user_id).profile_pic}`"
-                      :alt="friendsInfo.get(request.user_id)?.first_name"
-                      class="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div class="flex-grow">
-                    <p class="font-medium text-gray-900 hover:text-blue-600">
-                      {{ friendsInfo.get(request.user_id)?.first_name }}
-                      {{ friendsInfo.get(request.user_id)?.last_name }}
-                    </p>
-                    <p class="text-sm text-gray-500">
-                      {{ friendsInfo.get(request.user_id)?.department }}
-                      <span class="mx-1">·</span>
-                      <span>Received {{ formatDate(request.since) }}</span>
-                    </p>
-                  </div>
-                </router-link>
-                <div class="flex gap-2">
+                <!-- Request Received -->
+                <div v-else-if="relationshipStatus === 'request_received'" class="flex gap-2">
                   <button
                     @click="acceptFriendRequest"
-                    class="rounded bg-blue-500 px-3 py-1 text-sm font-medium text-white hover:bg-blue-600"
+                    class="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
                   >
+                    <i class="fa-solid fa-user-check"></i>
                     Accept
                   </button>
                   <button
                     @click="declineFriendRequest"
-                    class="rounded bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                    class="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
                   >
+                    <i class="fa-solid fa-user-xmark"></i>
                     Decline
                   </button>
+                </div>
+
+                <!-- No Relationship -->
+                <button
+                  v-else
+                  @click="sendFriendRequest"
+                  class="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
+                >
+                  <i class="fa-solid fa-user-plus"></i>
+                  Add Friend
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8 relative">
+          <!-- Main Content Area -->
+          <div class="w-full lg:w-[768px] flex-none">
+            <!-- Posts Section -->
+            <div class="space-y-4">
+              <h2 class="text-xl font-semibold">Posts</h2>
+              <Post v-for="post in posts" :key="post.post_id" :post="post" />
+              <div v-if="posts.length === 0" class="rounded-lg bg-gray-50 p-8 text-center">
+                <i class="fa-regular fa-newspaper mb-2 text-4xl text-gray-400"></i>
+                <h3 class="text-lg font-medium text-gray-700">No posts yet</h3>
+                <p class="mt-1 text-gray-500">
+                  {{
+                    isOwnProfile
+                      ? "Share something with your friends!"
+                      : "This user hasn't posted anything yet."
+                  }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Sidebar -->
+          <div class="lg:w-80 flex-shrink-0 lg:absolute lg:right-0">
+            <div class="bg-white rounded-lg shadow p-6 sticky top-6">
+              <!-- Friends Section -->
+              <div class="space-y-6">
+                <!-- Friends List -->
+                <div>
+                  <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold">Friends</h2>
+                    <span class="text-sm text-gray-500"
+                      >{{ profileFriends?.friends?.length || 0 }} friends</span
+                    >
+                  </div>
+                  <div class="mt-4 space-y-4">
+                    <div
+                      v-for="friend in profileFriends?.friends"
+                      :key="friend.user_id"
+                      class="flex items-center gap-3"
+                    >
+                      <router-link
+                        :to="`/profile/${friend.user_id}`"
+                        class="flex items-center gap-3 flex-grow hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                      >
+                        <div class="h-10 w-10 overflow-hidden rounded-full bg-gray-200">
+                          <img
+                            v-if="friendsInfo.get(friend.user_id)?.profile_pic"
+                            :src="`/meta${friendsInfo.get(friend.user_id).profile_pic}`"
+                            :alt="friendsInfo.get(friend.user_id)?.first_name"
+                            class="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div class="flex-grow">
+                          <p class="font-medium text-gray-900 hover:text-blue-600">
+                            {{ friendsInfo.get(friend.user_id)?.first_name }}
+                            {{ friendsInfo.get(friend.user_id)?.last_name }}
+                          </p>
+                          <p class="text-sm text-gray-500">
+                            {{ friendsInfo.get(friend.user_id)?.department }}
+                            <span class="mx-1">·</span>
+                            <span>Friends since {{ formatDate(friend.since) }}</span>
+                          </p>
+                        </div>
+                      </router-link>
+                    </div>
+                    <div
+                      v-if="!profileFriends?.friends?.length"
+                      class="rounded-lg bg-gray-50 p-4 text-center"
+                    >
+                      <p class="text-gray-500">No friends yet</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Friend Requests Sent -->
+                <div v-if="profileFriends?.friend_requests_sent?.length">
+                  <h3 class="text-lg font-semibold">Sent Requests</h3>
+                  <div class="mt-4 space-y-4">
+                    <div
+                      v-for="request in profileFriends?.friend_requests_sent"
+                      :key="request.user_id"
+                      class="flex items-center gap-3"
+                    >
+                      <router-link
+                        :to="`/profile/${request.user_id}`"
+                        class="flex items-center gap-3 flex-grow hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                      >
+                        <div class="h-10 w-10 overflow-hidden rounded-full bg-gray-200">
+                          <img
+                            v-if="friendsInfo.get(request.user_id)?.profile_pic"
+                            :src="`/meta${friendsInfo.get(request.user_id).profile_pic}`"
+                            :alt="friendsInfo.get(request.user_id)?.first_name"
+                            class="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div class="flex-grow">
+                          <p class="font-medium text-gray-900 hover:text-blue-600">
+                            {{ friendsInfo.get(request.user_id)?.first_name }}
+                            {{ friendsInfo.get(request.user_id)?.last_name }}
+                          </p>
+                          <p class="text-sm text-gray-500">
+                            {{ friendsInfo.get(request.user_id)?.department }}
+                            <span class="mx-1">·</span>
+                            <span>Sent {{ formatDate(request.since) }}</span>
+                          </p>
+                        </div>
+                      </router-link>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Friend Requests Received -->
+                <div v-if="profileFriends?.friend_requests_received?.length">
+                  <h3 class="text-lg font-semibold">Friend Requests</h3>
+                  <div class="mt-4 space-y-4">
+                    <div
+                      v-for="request in profileFriends?.friend_requests_received"
+                      :key="request.user_id"
+                      class="flex items-center gap-3"
+                    >
+                      <router-link
+                        :to="`/profile/${request.user_id}`"
+                        class="flex items-center gap-3 flex-grow hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                      >
+                        <div class="h-10 w-10 overflow-hidden rounded-full bg-gray-200">
+                          <img
+                            v-if="friendsInfo.get(request.user_id)?.profile_pic"
+                            :src="`/meta${friendsInfo.get(request.user_id).profile_pic}`"
+                            :alt="friendsInfo.get(request.user_id)?.first_name"
+                            class="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div class="flex-grow">
+                          <p class="font-medium text-gray-900 hover:text-blue-600">
+                            {{ friendsInfo.get(request.user_id)?.first_name }}
+                            {{ friendsInfo.get(request.user_id)?.last_name }}
+                          </p>
+                          <p class="text-sm text-gray-500">
+                            {{ friendsInfo.get(request.user_id)?.department }}
+                            <span class="mx-1">·</span>
+                            <span>Received {{ formatDate(request.since) }}</span>
+                          </p>
+                        </div>
+                      </router-link>
+                      <div class="flex gap-2">
+                        <button
+                          @click="acceptFriendRequest"
+                          class="rounded bg-blue-500 px-3 py-1 text-sm font-medium text-white hover:bg-blue-600"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          @click="declineFriendRequest"
+                          class="rounded bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

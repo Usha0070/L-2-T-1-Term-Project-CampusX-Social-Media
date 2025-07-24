@@ -100,123 +100,135 @@ watch(selectedFilters, performSearch);
 </script>
 
 <template>
-  <div class="container mx-auto max-w-5xl px-4 py-6">
-    <!-- Search Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold">Search</h1>
-      <p class="mt-2 text-gray-600">Search for users, groups, and posts</p>
-    </div>
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="lg:ml-20">
+      <!-- Search Header -->
+      <h1 class="text-3xl font-bold mb-8">Search</h1>
 
-    <!-- Search Input and Filters -->
-    <div class="mb-6 space-y-4">
-      <div class="relative">
-        <i class="fa-solid fa-search absolute left-4 top-3.5 text-gray-400"></i>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search..."
-          class="w-full rounded-lg border border-gray-300 pl-12 pr-4 py-3 focus:border-blue-500 focus:outline-none"
-        />
-      </div>
+      <div class="flex flex-col lg:flex-row gap-8 relative">
+        <!-- Main Content Area -->
+        <div class="w-full lg:w-[768px] flex-none">
+          <!-- Loading State -->
+          <div v-if="loading" class="py-12 text-center">
+            <div
+              class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"
+            ></div>
+            <p class="mt-4 text-gray-600">Searching...</p>
+          </div>
 
-      <div class="flex gap-2">
-        <button
-          v-for="filter in ['users', 'groups', 'posts']"
-          :key="filter"
-          @click="toggleFilter(filter)"
-          class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
-          :class="
-            selectedFilters.includes(filter)
-              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          "
-        >
-          <i
-            :class="{
-              'fa-solid fa-users': filter === 'users',
-              'fa-solid fa-user-group': filter === 'groups',
-              'fa-solid fa-newspaper': filter === 'posts',
-            }"
-            class="mr-2"
-          ></i>
-          {{ filter.charAt(0).toUpperCase() + filter.slice(1) }}
-        </button>
-      </div>
-    </div>
+          <!-- Error State -->
+          <div v-else-if="error" class="rounded-lg bg-red-50 p-4 text-center text-red-600">
+            {{ error }}
+            <button @click="performSearch" class="mt-2 text-sm font-medium text-red-700 hover:text-red-800">
+              Try again
+            </button>
+          </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="py-12 text-center">
-      <div
-        class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"
-      ></div>
-      <p class="mt-4 text-gray-600">Searching...</p>
-    </div>
+          <!-- Empty State -->
+          <div v-else-if="searchQuery && !hasResults" class="py-12 text-center">
+            <i class="fa-solid fa-search text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-700">No results found</h3>
+            <p class="mt-1 text-gray-500">Try different keywords or filters</p>
+          </div>
 
-    <!-- Error State -->
-    <div v-else-if="error" class="rounded-lg bg-red-50 p-4 text-center text-red-600">
-      {{ error }}
-      <button @click="performSearch" class="mt-2 text-sm font-medium text-red-700 hover:text-red-800">
-        Try again
-      </button>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="searchQuery && !hasResults" class="py-12 text-center">
-      <i class="fa-solid fa-search text-4xl text-gray-400 mb-4"></i>
-      <h3 class="text-lg font-medium text-gray-700">No results found</h3>
-      <p class="mt-1 text-gray-500">Try different keywords or filters</p>
-    </div>
-
-    <!-- Results -->
-    <div v-else-if="searchQuery" class="space-y-8">
-      <!-- Users Results -->
-      <div v-if="selectedFilters.includes('users') && results.users.length > 0" class="space-y-4">
-        <h2 class="text-xl font-semibold">Users</h2>
-        <div class="space-y-2">
-          <div
-            v-for="user in results.users"
-            :key="user.user_id"
-            @click="goToProfile(user.user_id)"
-            class="flex items-center gap-4 rounded-lg bg-white p-4 shadow hover:shadow-md transition-shadow cursor-pointer"
-          >
-            <div class="h-12 w-12 overflow-hidden rounded-full bg-gray-200">
-              <img
-                v-if="userProfiles.get(user.user_id)?.profile_pic"
-                :src="`/meta${userProfiles.get(user.user_id).profile_pic}`"
-                :alt="user.first_name"
-                class="h-full w-full object-cover"
-              />
-              <i
-                v-else
-                class="fa-solid fa-user text-gray-400 text-2xl flex items-center justify-center h-full"
-              ></i>
+          <!-- Results -->
+          <div v-else-if="searchQuery" class="space-y-8">
+            <!-- Users Results -->
+            <div v-if="selectedFilters.includes('users') && results.users.length > 0" class="space-y-4">
+              <h2 class="text-xl font-semibold">Users</h2>
+              <div class="space-y-2">
+                <div
+                  v-for="user in results.users"
+                  :key="user.user_id"
+                  @click="goToProfile(user.user_id)"
+                  class="flex items-center gap-4 rounded-lg bg-white p-4 shadow hover:shadow-md transition-shadow cursor-pointer"
+                >
+                  <div class="h-12 w-12 overflow-hidden rounded-full bg-gray-200">
+                    <img
+                      v-if="userProfiles.get(user.user_id)?.profile_pic"
+                      :src="`/meta${userProfiles.get(user.user_id).profile_pic}`"
+                      :alt="user.first_name"
+                      class="h-full w-full object-cover"
+                    />
+                    <i
+                      v-else
+                      class="fa-solid fa-user text-gray-400 text-2xl flex items-center justify-center h-full"
+                    ></i>
+                  </div>
+                  <div>
+                    <h3 class="font-medium">{{ user.first_name }} {{ user.last_name }}</h3>
+                    <p class="text-sm text-gray-600">{{ user.department }} {{ user.batch }}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 class="font-medium">{{ user.first_name }} {{ user.last_name }}</h3>
-              <p class="text-sm text-gray-600">{{ user.department }} {{ user.batch }}</p>
+
+            <!-- Groups Results -->
+            <div v-if="selectedFilters.includes('groups') && results.groups.length > 0" class="space-y-4">
+              <h2 class="text-xl font-semibold">Groups</h2>
+              <div class="space-y-2">
+                <GroupCard
+                  v-for="group in results.groups"
+                  :key="group.group_id"
+                  :group="group"
+                  @click="goToGroup(group.group_id)"
+                />
+              </div>
+            </div>
+
+            <!-- Posts Results -->
+            <div v-if="selectedFilters.includes('posts') && results.posts.length > 0" class="space-y-4">
+              <h2 class="text-xl font-semibold">Posts</h2>
+              <div class="space-y-4">
+                <PostSearchCard v-for="post in results.posts" :key="post.post_id" :post="post" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Groups Results -->
-      <div v-if="selectedFilters.includes('groups') && results.groups.length > 0" class="space-y-4">
-        <h2 class="text-xl font-semibold">Groups</h2>
-        <div class="space-y-2">
-          <GroupCard
-            v-for="group in results.groups"
-            :key="group.group_id"
-            :group="group"
-            @click="goToGroup(group.group_id)"
-          />
-        </div>
-      </div>
+        <!-- Right Sidebar with Search Options -->
+        <div class="lg:w-80 flex-shrink-0 lg:absolute lg:right-0">
+          <div class="bg-white rounded-lg shadow p-6 sticky top-6 space-y-6">
+            <div>
+              <h2 class="text-lg font-semibold mb-4">Search Options</h2>
 
-      <!-- Posts Results -->
-      <div v-if="selectedFilters.includes('posts') && results.posts.length > 0" class="space-y-4">
-        <h2 class="text-xl font-semibold">Posts</h2>
-        <div class="space-y-4">
-          <PostSearchCard v-for="post in results.posts" :key="post.post_id" :post="post" />
+              <!-- Search Input -->
+              <div class="relative mb-6">
+                <i class="fa-solid fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Search..."
+                  class="w-full rounded-lg border border-gray-300 pl-12 pr-4 py-3 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <!-- Filter Options -->
+              <div class="space-y-2">
+                <button
+                  v-for="filter in ['users', 'groups', 'posts']"
+                  :key="filter"
+                  @click="toggleFilter(filter)"
+                  class="w-full rounded-lg px-4 py-3 text-sm font-medium transition-colors flex items-center"
+                  :class="
+                    selectedFilters.includes(filter)
+                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  "
+                >
+                  <i
+                    :class="{
+                      'fa-solid fa-users': filter === 'users',
+                      'fa-solid fa-user-group': filter === 'groups',
+                      'fa-solid fa-newspaper': filter === 'posts',
+                    }"
+                    class="mr-3"
+                  ></i>
+                  {{ filter.charAt(0).toUpperCase() + filter.slice(1) }}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
