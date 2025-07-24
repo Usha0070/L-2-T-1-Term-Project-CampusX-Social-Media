@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { getCurrentUserToken } from "../utils/auth";
+import axios from "../utils/axios";
+
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
 import Feed from "../views/Feed.vue";
 import Profile from "../views/Profile.vue";
-import { getCurrentUserToken } from "../utils/auth";
 import Marketplace from "../views/Marketplace.vue";
 import Tuition from "../views/Tuition.vue";
 import Notifications from "../views/Notifications.vue";
@@ -13,6 +15,7 @@ import ChatDetail from "../views/ChatDetail.vue";
 import Groups from "../views/Groups.vue";
 import GroupDetail from "../views/GroupDetail.vue";
 import Search from "../views/Search.vue";
+import Stats from "../views/Stats.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -59,7 +62,16 @@ const router = createRouter({
       component: Search,
       meta: {
         requiresAuth: true,
-        keepAlive: true, // Add this to mark component for KeepAlive
+        keepAlive: true,
+      },
+    },
+    {
+      path: "/stats",
+      name: "stats",
+      component: Stats,
+      meta: {
+        requiresAuth: true,
+        requiresAdmin: true,
       },
     },
     {
@@ -95,7 +107,7 @@ const router = createRouter({
 });
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const token = getCurrentUserToken();
   const publicPages = ["/login", "/register"];
   const authRequired = !publicPages.includes(to.path);
@@ -106,6 +118,19 @@ router.beforeEach((to, from, next) => {
 
   if (!authRequired && token) {
     return next("/");
+  }
+
+  // Check admin requirement
+  if (to.meta.requiresAdmin) {
+    try {
+      const response = await axios.get("/api/users/isAdmin");
+      if (!response.data.isAdmin) {
+        return next("/");
+      }
+    } catch (err) {
+      console.error("Error checking admin status:", err);
+      return next("/");
+    }
   }
 
   next();

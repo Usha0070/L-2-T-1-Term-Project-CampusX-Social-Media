@@ -3,6 +3,7 @@ import * as db from "../db/index.js";
 import { generateHashedPassword } from "./auth.js";
 import * as schema from "../middleware/schema.js";
 import { upload } from "../middleware/upload.js";
+import { isAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -154,6 +155,15 @@ router.put("/me/blocks", async (req, res, next) => {
 });
 
 // public
+
+router.get("/isAdmin", async (req, res, next) => {
+  try {
+    const user_id = req.user.user_id;
+    res.status(200).json({ isAdmin: isAdmin(user_id) });
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get("/:id", async (req, res, next) => {
   try {
