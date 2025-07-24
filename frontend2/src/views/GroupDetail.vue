@@ -1,88 +1,93 @@
 <template>
-  <div class="container mx-auto max-w-5xl px-4 py-6">
-    <!-- Group Header -->
-    <div v-if="group" class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-      <div class="relative h-64">
-        <img
-          :src="group.cover_photo ? `/meta${group.cover_photo}` : '/meta/media/default_group_cover_photo.jpg'"
-          class="w-full h-full object-cover"
-          alt="Group cover"
-        />
-        <img
-          :src="group.profile_pic ? `/meta${group.profile_pic}` : '/meta/media/default_group_photo.png'"
-          class="absolute -bottom-8 left-8 w-24 h-24 rounded-full border-4 border-white object-cover"
-          alt="Group profile"
-        />
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Main Content Area - Centered -->
+    <div class="w-full lg:w-[768px] mx-auto">
+      <!-- Group Header -->
+      <div v-if="group" class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+        <div class="relative h-64">
+          <img
+            :src="
+              group.cover_photo ? `/meta${group.cover_photo}` : '/meta/media/default_group_cover_photo.jpg'
+            "
+            class="w-full h-full object-cover"
+            alt="Group cover"
+          />
+          <img
+            :src="group.profile_pic ? `/meta${group.profile_pic}` : '/meta/media/default_group_photo.png'"
+            class="absolute -bottom-8 left-8 w-24 h-24 rounded-full border-4 border-white object-cover"
+            alt="Group profile"
+          />
+        </div>
+        <div class="p-8 pt-12">
+          <h1 class="text-3xl font-bold mb-2">{{ group.name }}</h1>
+          <p class="text-gray-600 mb-4">{{ group.description }}</p>
+          <div class="flex items-center gap-4">
+            <span class="text-gray-500">{{ group.member_count || 0 }} members</span>
+            <button
+              v-if="!isMember"
+              @click="joinGroup"
+              class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Join Group
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="p-8 pt-12">
-        <h1 class="text-3xl font-bold mb-2">{{ group.name }}</h1>
-        <p class="text-gray-600 mb-4">{{ group.description }}</p>
-        <div class="flex items-center gap-4">
-          <span class="text-gray-500">{{ group.member_count || 0 }} members</span>
+
+      <!-- Create Post -->
+      <div v-if="isMember" class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <textarea
+          v-model="newPost.content"
+          class="w-full p-4 border rounded-lg mb-4"
+          placeholder="Write something to the group..."
+          rows="3"
+        ></textarea>
+        <div class="flex justify-end">
           <button
-            v-if="!isMember"
-            @click="joinGroup"
-            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            @click="createPost"
+            :disabled="loading.posts"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            Join Group
+            Post
           </button>
         </div>
       </div>
-    </div>
 
-    <!-- Create Post -->
-    <div v-if="isMember" class="bg-white rounded-lg shadow-md p-4 mb-8">
-      <textarea
-        v-model="newPost.content"
-        class="w-full p-4 border rounded-lg mb-4"
-        placeholder="Write something to the group..."
-        rows="3"
-      ></textarea>
-      <div class="flex justify-end">
-        <button
-          @click="createPost"
-          :disabled="loading.posts"
-          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-        >
-          Post
-        </button>
-      </div>
-    </div>
-
-    <!-- Loading state -->
-    <div v-if="loading.posts" class="space-y-4">
-      <div v-for="n in 3" :key="n" class="rounded-lg bg-white p-4 shadow animate-pulse">
-        <div class="flex items-center gap-3">
-          <div class="h-10 w-10 rounded-full bg-gray-200"></div>
-          <div class="space-y-2">
-            <div class="h-4 w-32 rounded bg-gray-200"></div>
-            <div class="h-3 w-24 rounded bg-gray-200"></div>
+      <!-- Loading state -->
+      <div v-if="loading.posts" class="space-y-4">
+        <div v-for="n in 3" :key="n" class="rounded-lg bg-white p-6 shadow animate-pulse">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-gray-200"></div>
+            <div class="space-y-2">
+              <div class="h-4 w-32 rounded bg-gray-200"></div>
+              <div class="h-3 w-24 rounded bg-gray-200"></div>
+            </div>
+          </div>
+          <div class="mt-4 space-y-2">
+            <div class="h-4 w-full rounded bg-gray-200"></div>
+            <div class="h-4 w-2/3 rounded bg-gray-200"></div>
           </div>
         </div>
-        <div class="mt-4 space-y-2">
-          <div class="h-4 w-full rounded bg-gray-200"></div>
-          <div class="h-4 w-2/3 rounded bg-gray-200"></div>
-        </div>
       </div>
-    </div>
 
-    <!-- Error state -->
-    <div v-else-if="error.posts" class="rounded-lg bg-red-50 p-4 text-center text-red-600">
-      {{ error.posts }}
-      <button @click="fetchPosts" class="mt-2 text-sm font-medium text-red-700 hover:text-red-800">
-        Try again
-      </button>
-    </div>
+      <!-- Error state -->
+      <div v-else-if="error.posts" class="rounded-lg bg-red-50 p-6 text-center text-red-600">
+        {{ error.posts }}
+        <button @click="fetchPosts" class="mt-2 text-sm font-medium text-red-700 hover:text-red-800">
+          Try again
+        </button>
+      </div>
 
-    <!-- Posts list -->
-    <div v-else class="space-y-4">
-      <Post v-for="post in posts" :key="post.post_id" :post="post" @post-updated="fetchPosts" />
+      <!-- Posts list -->
+      <div v-else class="space-y-4">
+        <Post v-for="post in posts" :key="post.post_id" :post="post" @post-updated="fetchPosts" />
 
-      <!-- Empty state -->
-      <div v-if="posts.length === 0" class="rounded-lg bg-gray-50 p-8 text-center">
-        <i class="fa-regular fa-newspaper mb-2 text-4xl text-gray-400"></i>
-        <h3 class="text-lg font-medium text-gray-700">No posts yet</h3>
-        <p class="mt-1 text-gray-500">Be the first one to post in this group</p>
+        <!-- Empty state -->
+        <div v-if="posts.length === 0" class="rounded-lg bg-gray-50 p-8 text-center">
+          <i class="fa-regular fa-newspaper mb-2 text-4xl text-gray-400"></i>
+          <h3 class="text-lg font-medium text-gray-700">No posts yet</h3>
+          <p class="mt-1 text-gray-500">Be the first one to post in this group</p>
+        </div>
       </div>
     </div>
   </div>
