@@ -3,20 +3,11 @@ import { getUserByUserId } from "./user.js";
 import { getPostByPostId } from "./post.js";
 import { getGroupByGroupId } from "./group.js";
 
-/**
- * Performs a comprehensive search across users, groups, and posts
- * @param {string} query - The search query
- * @param {Object} options - Search options
- * @param {number} options.limit - Maximum number of results per category
- * @param {string[]} options.filters - Categories to search in ['users', 'groups', 'posts']
- * @returns {Promise<Object>} Search results grouped by category
- */
 export async function search(query, options = {}) {
   const { limit = 10, filters = ["users", "groups", "posts"] } = options;
   const searchQuery = `%${query}%`;
   const results = {};
 
-  // Search users
   if (filters.includes("users")) {
     const userQuery = `
       SELECT user_id
@@ -33,7 +24,6 @@ export async function search(query, options = {}) {
     results.users = await Promise.all(userIds.map(({ user_id }) => getUserByUserId(user_id)));
   }
 
-  // Search groups
   if (filters.includes("groups")) {
     const groupQuery = `
       SELECT group_id
@@ -48,7 +38,6 @@ export async function search(query, options = {}) {
     results.groups = await Promise.all(groupIds.map(({ group_id }) => getGroupByGroupId(group_id)));
   }
 
-  // Search posts
   if (filters.includes("posts")) {
     const postQuery = `
       SELECT post_id

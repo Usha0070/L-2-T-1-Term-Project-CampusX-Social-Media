@@ -19,6 +19,140 @@ const isOwnProfile = ref(false);
 const user = ref(null);
 const profile = ref(null);
 const posts = ref([]);
+const showMoreInfo = ref(false);
+const showEditModal = ref(false);
+const showErrorAlert = ref(false);
+const editForm = ref({
+  // User info
+  first_name: "",
+  last_name: "",
+  nickname: "",
+  email: "",
+  phone: "",
+  date_of_birth: "",
+  gender: "",
+  residence_type: "",
+  hall: "",
+  room_no: "",
+  city_name: "",
+  department: "",
+  batch: "",
+  student_id: "",
+  // Profile info
+  bio: "",
+  about: "",
+  // File uploads
+  profile_pic: null,
+  cover_photo: null,
+});
+
+const profilePicPreview = ref(null);
+const coverPhotoPreview = ref(null);
+
+const handleFileUpload = (event, type) => {
+  const file = event.target.files[0];
+  if (file) {
+    editForm.value[type] = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (type === "profile_pic") {
+        profilePicPreview.value = e.target.result;
+      } else {
+        coverPhotoPreview.value = e.target.result;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const halls = ["AUH", "SWH", "SBH", "TH", "RH", "NH", "ShH", "SoH"];
+const departments = [
+  "CSE",
+  "EEE",
+  "ME",
+  "CE",
+  "BME",
+  "ChE",
+  "MME",
+  "IPE",
+  "NCE",
+  "NAME",
+  "WRE",
+  "ARC",
+  "URP",
+];
+
+const initEditForm = () => {
+  if (user.value && profile.value) {
+    editForm.value = {
+      first_name: user.value.first_name,
+      last_name: user.value.last_name,
+      nickname: user.value.nickname,
+      email: user.value.email,
+      phone: user.value.phone,
+      date_of_birth: user.value.date_of_birth,
+      gender: user.value.gender,
+      residence_type: user.value.residence_type,
+      hall: user.value.hall,
+      room_no: user.value.room_no,
+      city_name: user.value.city_name,
+      department: user.value.department,
+      batch: user.value.batch,
+      student_id: user.value.student_id,
+      bio: profile.value.bio || "",
+      about: profile.value.about || "",
+      profile_pic: profile.value.profile_pic || null,
+      cover_photo: profile.value.cover_photo || null,
+    };
+    profilePicPreview.value = profile.value.profile_pic ? `/meta${profile.value.profile_pic}` : null;
+    coverPhotoPreview.value = profile.value.cover_photo ? `/meta${profile.value.cover_photo}` : null;
+  }
+};
+
+const saveProfile = async () => {
+  try {
+    showErrorAlert.value = false;
+    // Create FormData for profile update if there are file uploads
+    const formData = new FormData();
+    if (editForm.value.profile_pic) {
+      formData.append("profile_pic", editForm.value.profile_pic);
+    }
+    if (editForm.value.cover_photo) {
+      formData.append("cover_photo", editForm.value.cover_photo);
+    }
+    formData.append("bio", editForm.value.bio);
+    formData.append("about", editForm.value.about);
+
+    // Update user info
+    const userUpdateData = { ...editForm.value };
+    delete userUpdateData.bio;
+    delete userUpdateData.about;
+    delete userUpdateData.profile_pic;
+    delete userUpdateData.cover_photo;
+
+    await Promise.all([
+      axios.put("/api/users/me", userUpdateData),
+      axios.put("/api/users/me/profile", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }),
+    ]);
+
+    await fetchUserData();
+    showEditModal.value = false;
+    profilePicPreview.value = null;
+    coverPhotoPreview.value = null;
+  } catch (err) {
+    console.error("Error updating profile:", err);
+    error.value = err.response?.data?.error || "Failed to update profile";
+    showErrorAlert.value = true;
+  }
+};
+
+const refreshPage = () => {
+  window.location.reload();
+};
 
 const profileFriends = ref();
 const myFriends = ref();
@@ -282,6 +416,313 @@ onMounted(async () => {
                     >({{ user.nickname }})</span
                   >
                 </h1>
+                <!-- Add Edit Button for own profile -->
+                <button
+                  v-if="isOwnProfile"
+                  @click="
+                    showEditModal = true;
+                    initEditForm();
+                  "
+                  class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 rounded-full transition-all duration-200 ease-in-out"
+                >
+                  <i class="fa-solid fa-pen-to-square"></i>
+                  Edit Profile
+                </button>
+
+                <!-- Edit Modal -->
+                <div v-if="showEditModal" class="fixed inset-0 z-50">
+                  <!-- Backdrop -->
+                  <div class="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+
+                  <!-- Modal -->
+                  <div class="relative min-h-screen flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+                      <!-- Modal Header -->
+                      <div
+                        class="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center z-10"
+                      >
+                        <h2 class="text-xl font-bold">Edit Profile</h2>
+                        <button
+                          @click="showEditModal = false"
+                          class="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100 transition-colors"
+                        >
+                          <i class="fa-solid fa-times"></i>
+                        </button>
+                      </div>
+
+                      <!-- Error Alert -->
+                      <div
+                        v-if="showErrorAlert && error"
+                        class="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg"
+                      >
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+                            <p class="text-red-700">{{ error }}</p>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <button
+                              type="button"
+                              @click="refreshPage"
+                              class="text-sm px-3 py-1.5 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors flex items-center gap-1"
+                            >
+                              <i class="fa-solid fa-rotate-right"></i>
+                              <span>Refresh</span>
+                            </button>
+                            <button
+                              type="button"
+                              @click="showErrorAlert = false"
+                              class="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                              <i class="fa-solid fa-times"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <p class="mt-2 text-sm text-red-600">
+                          Try refreshing the page if the problem persists.
+                        </p>
+                      </div>
+
+                      <form @submit.prevent="saveProfile" class="p-6 space-y-8">
+                        <!-- Photo Upload Section -->
+                        <div class="space-y-6">
+                          <h3 class="font-semibold text-gray-900">Profile Photos</h3>
+
+                          <!-- Cover Photo -->
+                          <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700">Cover Photo</label>
+                            <div class="relative h-48 bg-gray-100 rounded-lg overflow-hidden">
+                              <img
+                                v-if="coverPhotoPreview || profile?.cover_photo"
+                                :src="coverPhotoPreview || `/meta${profile.cover_photo}`"
+                                class="h-full w-full object-cover"
+                              />
+                              <div class="absolute inset-0 flex items-center justify-center">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  class="absolute inset-0 opacity-0 cursor-pointer"
+                                  @change="handleFileUpload($event, 'cover_photo')"
+                                />
+                                <div class="text-center">
+                                  <i class="fa-solid fa-camera text-gray-400 text-2xl"></i>
+                                  <p class="mt-2 text-sm text-gray-500">Click to change cover photo</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Profile Picture -->
+                          <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700">Profile Picture</label>
+                            <div class="relative h-32 w-32 bg-gray-100 rounded-full overflow-hidden">
+                              <img
+                                v-if="profilePicPreview || profile?.profile_pic"
+                                :src="profilePicPreview || `/meta${profile.profile_pic}`"
+                                class="h-full w-full object-cover"
+                              />
+                              <div class="absolute inset-0 flex items-center justify-center">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  class="absolute inset-0 opacity-0 cursor-pointer"
+                                  @change="handleFileUpload($event, 'profile_pic')"
+                                />
+                                <div class="text-center">
+                                  <i class="fa-solid fa-camera text-gray-400 text-xl"></i>
+                                  <p class="mt-1 text-xs text-gray-500">Change photo</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Basic Information -->
+                        <div class="space-y-4">
+                          <h3 class="font-semibold">Basic Information</h3>
+                          <div class="grid grid-cols-2 gap-4">
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">First Name</label>
+                              <input
+                                v-model="editForm.first_name"
+                                type="text"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                              <input
+                                v-model="editForm.last_name"
+                                type="text"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Nickname</label>
+                              <input
+                                v-model="editForm.nickname"
+                                type="text"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Email</label>
+                              <input
+                                v-model="editForm.email"
+                                type="email"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Phone</label>
+                              <input
+                                v-model="editForm.phone"
+                                type="text"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                              <input
+                                v-model="editForm.date_of_birth"
+                                type="date"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Academic Information -->
+                        <div class="space-y-4">
+                          <h3 class="font-semibold">Academic Information</h3>
+                          <div class="grid grid-cols-2 gap-4">
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Department</label>
+                              <select
+                                v-model="editForm.department"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              >
+                                <option v-for="dept in departments" :key="dept" :value="dept">
+                                  {{ dept }}
+                                </option>
+                              </select>
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Batch</label>
+                              <input
+                                v-model="editForm.batch"
+                                type="number"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Student ID</label>
+                              <input
+                                v-model="editForm.student_id"
+                                type="text"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Residence Information -->
+                        <div class="space-y-4">
+                          <h3 class="font-semibold">Residence Information</h3>
+                          <div class="grid grid-cols-2 gap-4">
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Residence Type</label>
+                              <select
+                                v-model="editForm.residence_type"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              >
+                                <option value="Resident">Resident</option>
+                                <option value="Attached">Attached</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Hall</label>
+                              <select
+                                v-model="editForm.hall"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              >
+                                <option v-for="hall in halls" :key="hall" :value="hall">{{ hall }}</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">Room Number</label>
+                              <input
+                                v-model="editForm.room_no"
+                                type="text"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700">City</label>
+                              <input
+                                v-model="editForm.city_name"
+                                type="text"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Bio and About -->
+                        <div class="space-y-4">
+                          <h3 class="font-semibold">Additional Information</h3>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700">Bio</label>
+                            <textarea
+                              v-model="editForm.bio"
+                              rows="2"
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            ></textarea>
+                          </div>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700">About</label>
+                            <textarea
+                              v-model="editForm.about"
+                              rows="3"
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            ></textarea>
+                          </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div
+                          class="sticky bottom-0 bg-white pt-4 pb-2 -mx-6 px-6 border-t flex justify-end gap-3"
+                        >
+                          <button
+                            type="button"
+                            @click="showEditModal = false"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Save Changes
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="mt-2 flex gap-4 text-gray-600">
                   <div>
                     <i class="fa-solid fa-graduation-cap mr-2"></i>
@@ -293,6 +734,80 @@ onMounted(async () => {
                   </div>
                 </div>
                 <p v-if="profile?.bio" class="mt-4 text-gray-600">{{ profile.bio }}</p>
+
+                <!-- More Info Button -->
+                <button
+                  @click="showMoreInfo = !showMoreInfo"
+                  class="mt-4 flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <span>{{ showMoreInfo ? "Show Less" : "Show More" }}</span>
+                  <i :class="showMoreInfo ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></i>
+                </button>
+
+                <!-- Additional User Information -->
+                <div
+                  v-show="showMoreInfo"
+                  class="mt-6 grid grid-cols-2 gap-x-8 gap-y-4 text-sm transition-all duration-300"
+                >
+                  <!-- Contact Information -->
+                  <div class="col-span-2">
+                    <h3 class="text-lg font-semibold mb-3">Contact Information</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <p class="text-gray-500">Email</p>
+                        <p class="font-medium">{{ user?.email }}</p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500">Phone</p>
+                        <p class="font-medium">{{ user?.phone }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Personal Information -->
+                  <div class="col-span-2">
+                    <h3 class="text-lg font-semibold mb-3">Personal Information</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <p class="text-gray-500">Date of Birth</p>
+                        <p class="font-medium">{{ new Date(user?.date_of_birth).toLocaleDateString() }}</p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500">Gender</p>
+                        <p class="font-medium">{{ user?.gender }}</p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500">City</p>
+                        <p class="font-medium">{{ user?.city_name }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Residence Information -->
+                  <div class="col-span-2">
+                    <h3 class="text-lg font-semibold mb-3">Residence Information</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <p class="text-gray-500">Residence Type</p>
+                        <p class="font-medium">{{ user?.residence_type }}</p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500">Hall</p>
+                        <p class="font-medium">{{ user?.hall }}</p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500">Room Number</p>
+                        <p class="font-medium">{{ user?.room_no }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- About Section -->
+                  <div class="col-span-2" v-if="profile?.about">
+                    <h3 class="text-lg font-semibold mb-3">About</h3>
+                    <p class="text-gray-600">{{ profile.about }}</p>
+                  </div>
+                </div>
               </div>
 
               <!-- Relationship Actions -->
