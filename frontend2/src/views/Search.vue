@@ -105,9 +105,9 @@ watch(selectedFilters, performSearch);
       <!-- Search Header -->
       <h1 class="text-3xl font-bold mb-8">Search</h1>
 
-      <div class="flex flex-col lg:flex-row gap-8 relative">
+      <div class="grid lg:grid-cols-[1fr_20rem] gap-[5rem]">
         <!-- Main Content Area -->
-        <div class="w-full lg:w-[768px] flex-none">
+        <div class="w-full">
           <!-- Loading State -->
           <div v-if="loading" class="py-12 text-center">
             <div
@@ -187,8 +187,8 @@ watch(selectedFilters, performSearch);
         </div>
 
         <!-- Right Sidebar with Search Options -->
-        <div class="lg:w-80 flex-shrink-0 lg:absolute lg:right-0">
-          <div class="bg-white rounded-lg shadow p-6 sticky top-6 space-y-6">
+        <div>
+          <div class="bg-white rounded-lg shadow p-[1.5rem] lg:sticky lg:top-[1.5rem] space-y-6">
             <div>
               <h2 class="text-lg font-semibold mb-4">Search Options</h2>
 

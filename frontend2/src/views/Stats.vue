@@ -352,13 +352,13 @@ const goToGroup = (groupId) => {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-6">
-    <div class="lg:ml-20">
+  <div class="max-w-[90rem] mx-auto px-4 py-6">
+    <div class="lg:ml-[5rem]">
       <h1 class="text-3xl font-bold mb-8">Statistics Dashboard</h1>
 
-      <div class="flex flex-col lg:flex-row gap-8 relative">
+      <div class="grid lg:grid-cols-[1fr_20rem] gap-[5rem]">
         <!-- Main Content Area -->
-        <div class="w-full lg:w-[768px] flex-none">
+        <div class="w-full">
           <!-- Results -->
           <div class="bg-white rounded-lg shadow">
             <!-- Loading State -->
@@ -791,12 +791,12 @@ const goToGroup = (groupId) => {
         </div>
 
         <!-- Right Sidebar with Filters -->
-        <div class="lg:w-80 flex-shrink-0 lg:absolute lg:right-0">
-          <div class="bg-white rounded-lg shadow p-6 sticky top-6">
-            <h2 class="text-lg font-semibold mb-6">Filters</h2>
+        <div>
+          <div class="bg-white rounded-lg shadow p-[1.5rem] lg:sticky lg:top-[1.5rem]">
+            <h2 class="text-lg font-semibold mb-[1.5rem]">Filters</h2>
 
             <!-- Stat Type Selection -->
-            <div class="mb-6">
+            <div class="mb-[1.5rem]">
               <label class="block text-sm font-medium text-gray-700 mb-2">Statistic Type</label>
               <select
                 v-model="selectedType"
