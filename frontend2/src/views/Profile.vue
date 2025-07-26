@@ -50,6 +50,7 @@ const profilePicPreview = ref(null);
 const coverPhotoPreview = ref(null);
 
 const showCreatePostModal = ref(false);
+const showTagFriends = ref(false);
 const postForm = ref({
   content: "",
   visibility: "public",
@@ -74,6 +75,7 @@ const initPostForm = () => {
   };
   postMediaFiles.value = [];
   postMediaPreviews.value = [];
+  showTagFriends.value = false;
 };
 
 const handlePostMediaUpload = (event) => {
@@ -116,6 +118,15 @@ const removePostMedia = (index) => {
   postMediaFiles.value.splice(index, 1);
   postMediaPreviews.value.splice(index, 1);
   postForm.value.media_contexts.splice(index, 1);
+};
+
+const toggleFriendTag = (friendId) => {
+  const index = postForm.value.tagged_user_ids.indexOf(friendId);
+  if (index > -1) {
+    postForm.value.tagged_user_ids.splice(index, 1);
+  } else {
+    postForm.value.tagged_user_ids.push(friendId);
+  }
 };
 
 const createPost = async () => {
@@ -207,26 +218,6 @@ const createPost = async () => {
   }
 };
 
-// Helper function to parse tagged user IDs from comma-separated input
-const handleTaggedUsersInput = (event) => {
-  const value = event.target.value;
-  if (!value.trim()) {
-    postForm.value.tagged_user_ids = [];
-    return;
-  }
-
-  const userIds = value
-    .split(",")
-    .map((id) => {
-      const trimmed = id.trim();
-      const parsed = parseInt(trimmed);
-      return isNaN(parsed) ? null : parsed;
-    })
-    .filter((id) => id !== null && id > 0); // Remove invalid IDs
-
-  postForm.value.tagged_user_ids = userIds;
-};
-
 // Helper function to get character count with proper formatting
 const getCharacterCount = computed(() => {
   const count = postForm.value.content.length;
@@ -251,41 +242,27 @@ const canSubmitPost = computed(() => {
   return (hasContent || hasMedia) && isNotTooLong;
 });
 
+// Get tagged friends info
+const taggedFriendsInfo = computed(() => {
+  return postForm.value.tagged_user_ids
+    .map((userId) => {
+      const friendInfo = friendsInfo.value.get(userId);
+      return friendInfo
+        ? {
+            id: userId,
+            name: `${friendInfo.first_name} ${friendInfo.last_name}`,
+            department: friendInfo.department,
+          }
+        : null;
+    })
+    .filter(Boolean);
+});
+
 // Initialize post form when component mounts (add this to your existing onMounted)
 onMounted(() => {
   // ... your existing onMounted code
   initPostForm();
 });
-
-// Optional: Auto-save draft functionality
-const saveDraft = () => {
-  const draft = {
-    content: postForm.value.content,
-    visibility: postForm.value.visibility,
-    timestamp: Date.now(),
-  };
-  localStorage.setItem("post_draft", JSON.stringify(draft));
-};
-
-const loadDraft = () => {
-  try {
-    const draft = localStorage.getItem("post_draft");
-    if (draft) {
-      const parsed = JSON.parse(draft);
-      // Only load if draft is less than 24 hours old
-      if (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-        postForm.value.content = parsed.content || "";
-        postForm.value.visibility = parsed.visibility || "public";
-      }
-    }
-  } catch (err) {
-    console.error("Error loading draft:", err);
-  }
-};
-
-const clearDraft = () => {
-  localStorage.removeItem("post_draft");
-};
 
 const handleFileUpload = (event, type) => {
   const file = event.target.files[0];
@@ -597,18 +574,6 @@ watch(
   }
 );
 
-// Watch for content changes to auto-save draft
-watch(
-  () => postForm.value.content,
-  (newContent) => {
-    if (newContent.trim().length > 10) {
-      // Only save if substantial content
-      saveDraft();
-    }
-  },
-  { debounce: 1000 }
-); // Debounce to avoid too frequent saves
-
 onMounted(async () => {
   await fetchMyFriends();
   await fetchUserData();
@@ -682,7 +647,7 @@ onMounted(async () => {
                 <!-- Edit Modal -->
                 <div v-if="showEditModal" class="fixed inset-0 z-50">
                   <!-- Backdrop -->
-                  <div class="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+                  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
 
                   <!-- Modal -->
                   <div class="relative min-h-screen flex items-center justify-center p-4">
@@ -1122,7 +1087,6 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-        <!-- Replace the main content section in your profile template with this -->
 
         <div
           class="grid gap-[2rem]"
@@ -1156,10 +1120,7 @@ onMounted(async () => {
 
                 <!-- Create Post Button -->
                 <button
-                  @click="
-                    showCreatePostModal = true;
-                    loadDraft();
-                  "
+                  @click="showCreatePostModal = true"
                   class="flex-grow text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-colors duration-200"
                 >
                   What's on your mind{{ user?.first_name ? ", " + user.first_name : "" }}?
@@ -1168,10 +1129,7 @@ onMounted(async () => {
                 <!-- Quick Action Buttons -->
                 <div class="flex gap-2">
                   <button
-                    @click="
-                      showCreatePostModal = true;
-                      loadDraft();
-                    "
+                    @click="showCreatePostModal = true"
                     class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="Create Post"
                   >
@@ -1180,16 +1138,343 @@ onMounted(async () => {
                   </button>
 
                   <button
-                    @click="
-                      showCreatePostModal = true;
-                      loadDraft();
-                    "
+                    @click="showCreatePostModal = true"
                     class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                     title="Add Photos/Videos"
                   >
                     <i class="fa-solid fa-images text-lg"></i>
                     <span class="hidden sm:inline">Media</span>
                   </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Create Post Modal -->
+            <div v-if="showCreatePostModal" class="fixed inset-0 z-50">
+              <!-- Backdrop with blur -->
+              <div
+                class="absolute inset-0 bg-black/30 backdrop-blur-md"
+                @click="showCreatePostModal = false"
+              ></div>
+
+              <!-- Modal -->
+              <div class="relative min-h-screen flex items-center justify-center p-4">
+                <div
+                  class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                  @click.stop
+                >
+                  <!-- Modal Header -->
+                  <div
+                    class="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center z-10"
+                  >
+                    <h2 class="text-xl font-bold">Create Post</h2>
+                    <button
+                      @click="showCreatePostModal = false"
+                      class="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100 transition-colors"
+                    >
+                      <i class="fa-solid fa-times"></i>
+                    </button>
+                  </div>
+
+                  <!-- Error Alert -->
+                  <div
+                    v-if="showErrorAlert && error"
+                    class="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+                        <p class="text-red-700">{{ error }}</p>
+                      </div>
+                      <button
+                        type="button"
+                        @click="showErrorAlert = false"
+                        class="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <i class="fa-solid fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <form @submit.prevent="createPost" class="p-6 space-y-6">
+                    <!-- Post Content -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">What's on your mind?</label>
+                      <textarea
+                        v-model="postForm.content"
+                        rows="4"
+                        placeholder="Share your thoughts..."
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                        :class="{
+                          'border-red-300 focus:border-red-500': getCharacterCount.isAtLimit,
+                          'border-yellow-300 focus:border-yellow-500':
+                            getCharacterCount.isNearLimit && !getCharacterCount.isAtLimit,
+                        }"
+                        maxlength="5000"
+                      ></textarea>
+                      <div class="flex justify-between items-center mt-1">
+                        <div class="text-xs text-gray-500">Press Ctrl+Enter to post quickly</div>
+                        <div
+                          class="text-xs mt-1"
+                          :class="{
+                            'text-red-500': getCharacterCount.isAtLimit,
+                            'text-yellow-600': getCharacterCount.isNearLimit && !getCharacterCount.isAtLimit,
+                            'text-gray-500': !getCharacterCount.isNearLimit,
+                          }"
+                        >
+                          {{ getCharacterCount.count }}/{{ getCharacterCount.max }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Visibility -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa-solid fa-eye mr-1"></i>
+                        Visibility
+                      </label>
+                      <select
+                        v-model="postForm.visibility"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                      >
+                        <option value="public">Public - Anyone can see</option>
+                        <option value="friends">Friends Only</option>
+                        <option value="private">Private - Only you</option>
+                      </select>
+                    </div>
+
+                    <!-- Media Upload -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa-solid fa-images mr-1"></i>
+                        Media ({{ postMediaFiles.length }}/10)
+                      </label>
+                      <div class="space-y-4">
+                        <!-- Upload Button -->
+                        <div class="flex items-center justify-center w-full">
+                          <label
+                            class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors"
+                            :class="{
+                              'border-gray-300 bg-gray-50 hover:bg-gray-100': postMediaFiles.length < 10,
+                              'border-gray-200 bg-gray-100 cursor-not-allowed': postMediaFiles.length >= 10,
+                            }"
+                          >
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                              <i
+                                class="text-3xl mb-2"
+                                :class="{
+                                  'fa-solid fa-cloud-upload-alt text-gray-400': postMediaFiles.length < 10,
+                                  'fa-solid fa-ban text-gray-300': postMediaFiles.length >= 10,
+                                }"
+                              ></i>
+                              <p
+                                class="text-sm"
+                                :class="postMediaFiles.length >= 10 ? 'text-gray-400' : 'text-gray-500'"
+                              >
+                                <span class="font-semibold">
+                                  {{
+                                    postMediaFiles.length >= 10 ? "Maximum files reached" : "Click to upload"
+                                  }}
+                                </span>
+                                {{ postMediaFiles.length < 10 ? " or drag and drop" : "" }}
+                              </p>
+                              <p class="text-xs text-gray-500" v-if="postMediaFiles.length < 10">
+                                Images or videos ({{ 10 - postMediaFiles.length }} remaining)
+                              </p>
+                            </div>
+                            <input
+                              type="file"
+                              class="hidden"
+                              multiple
+                              accept="image/*,video/*"
+                              @change="handlePostMediaUpload"
+                              :disabled="postMediaFiles.length >= 10"
+                            />
+                          </label>
+                        </div>
+
+                        <!-- Media Previews -->
+                        <div v-if="postMediaPreviews.length > 0" class="grid grid-cols-2 gap-4">
+                          <div
+                            v-for="(preview, index) in postMediaPreviews"
+                            :key="index"
+                            class="relative group"
+                          >
+                            <!-- Image Preview -->
+                            <img
+                              v-if="preview.type === 'image'"
+                              :src="preview.url"
+                              :alt="preview.name"
+                              class="w-full h-32 object-cover rounded-lg"
+                            />
+                            <!-- Video Preview -->
+                            <video
+                              v-else
+                              :src="preview.url"
+                              class="w-full h-32 object-cover rounded-lg"
+                              controls
+                              preload="metadata"
+                            ></video>
+
+                            <!-- Remove Button -->
+                            <button
+                              type="button"
+                              @click="removePostMedia(index)"
+                              class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
+                            >
+                              <i class="fa-solid fa-times text-xs"></i>
+                            </button>
+
+                            <!-- File Info -->
+                            <div
+                              class="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded"
+                            >
+                              {{
+                                preview.name.length > 15
+                                  ? preview.name.substring(0, 15) + "..."
+                                  : preview.name
+                              }}
+                            </div>
+
+                            <!-- Media Context -->
+                            <input
+                              v-model="postForm.media_contexts[index]"
+                              type="text"
+                              placeholder="Add a caption..."
+                              class="absolute bottom-0 left-0 right-0 bg-black/50 text-white placeholder-gray-300 px-2 py-1 text-xs rounded-b-lg border-none focus:outline-none focus:bg-black/70 transition-colors"
+                              maxlength="200"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Tagged Friends -->
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                          <i class="fa-solid fa-user-tag mr-1"></i>
+                          Tag Friends
+                        </label>
+                        <button
+                          type="button"
+                          @click="showTagFriends = !showTagFriends"
+                          class="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                        >
+                          <span>{{ showTagFriends ? "Hide" : "Show" }} friends list</span>
+                          <i
+                            :class="showTagFriends ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"
+                          ></i>
+                        </button>
+                      </div>
+
+                      <!-- Tagged Friends Display -->
+                      <div v-if="taggedFriendsInfo.length > 0" class="mb-3">
+                        <div class="flex flex-wrap gap-2">
+                          <span
+                            v-for="friend in taggedFriendsInfo"
+                            :key="friend.id"
+                            class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                          >
+                            {{ friend.name }}
+                            <button
+                              type="button"
+                              @click="toggleFriendTag(friend.id)"
+                              class="hover:bg-blue-200 rounded-full p-0.5"
+                            >
+                              <i class="fa-solid fa-times text-xs"></i>
+                            </button>
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Friends List -->
+                      <div
+                        v-if="showTagFriends"
+                        class="border rounded-lg p-3 max-h-40 overflow-y-auto bg-gray-50"
+                      >
+                        <div v-if="myFriends?.friends?.length" class="space-y-2">
+                          <button
+                            v-for="friend in myFriends.friends"
+                            :key="friend.user_id"
+                            type="button"
+                            @click="toggleFriendTag(friend.user_id)"
+                            class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white transition-colors text-left"
+                            :class="{
+                              'bg-blue-50 border border-blue-200': postForm.tagged_user_ids.includes(
+                                friend.user_id
+                              ),
+                              'bg-white': !postForm.tagged_user_ids.includes(friend.user_id),
+                            }"
+                          >
+                            <div class="h-8 w-8 overflow-hidden rounded-full bg-gray-200 flex-shrink-0">
+                              <img
+                                v-if="friendsInfo.get(friend.user_id)?.profile_pic"
+                                :src="`/meta${friendsInfo.get(friend.user_id).profile_pic}`"
+                                class="h-full w-full object-cover"
+                                :alt="friendsInfo.get(friend.user_id)?.first_name"
+                              />
+                            </div>
+                            <div class="flex-grow">
+                              <p class="font-medium text-sm">
+                                {{ friendsInfo.get(friend.user_id)?.first_name }}
+                                {{ friendsInfo.get(friend.user_id)?.last_name }}
+                              </p>
+                              <p class="text-xs text-gray-500">
+                                {{ friendsInfo.get(friend.user_id)?.department }}
+                              </p>
+                            </div>
+                            <div class="flex-shrink-0">
+                              <i
+                                :class="
+                                  postForm.tagged_user_ids.includes(friend.user_id)
+                                    ? 'fa-solid fa-check-circle text-blue-600'
+                                    : 'fa-regular fa-circle text-gray-400'
+                                "
+                              ></i>
+                            </div>
+                          </button>
+                        </div>
+                        <div v-else class="text-center text-gray-500 text-sm py-4">No friends to tag</div>
+                      </div>
+
+                      <p class="text-xs text-gray-500 mt-1">
+                        {{
+                          postForm.tagged_user_ids.length > 0
+                            ? `${postForm.tagged_user_ids.length} friend(s) tagged`
+                            : "No friends tagged"
+                        }}
+                      </p>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div
+                      class="sticky bottom-0 bg-white pt-4 pb-2 -mx-6 px-6 border-t flex justify-end gap-3"
+                    >
+                      <button
+                        type="button"
+                        @click="showCreatePostModal = false"
+                        class="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        :disabled="!canSubmitPost"
+                        class="px-6 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2"
+                        :class="{
+                          'bg-blue-600 hover:bg-blue-700': canSubmitPost,
+                          'bg-gray-300 cursor-not-allowed': !canSubmitPost,
+                        }"
+                      >
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Post
+                        <span v-if="postMediaFiles.length > 0" class="text-xs">
+                          ({{ postMediaFiles.length }} files)
+                        </span>
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>
@@ -1255,307 +1540,6 @@ onMounted(async () => {
                           </p>
                         </div>
                       </router-link>
-
-                      <!-- Enhanced Create Post Modal Template - FIXED VERSION -->
-                      <div v-if="showCreatePostModal" class="fixed inset-0 z-50">
-                        <!-- Backdrop -->
-                        <div
-                          class="absolute inset-0 bg-black/20 backdrop-blur-sm"
-                          @click="showCreatePostModal = false"
-                        ></div>
-
-                        <!-- Modal -->
-                        <div class="relative min-h-screen flex items-center justify-center p-4">
-                          <div
-                            class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-                            @click.stop
-                          >
-                            <!-- Modal Header -->
-                            <div
-                              class="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center z-10"
-                            >
-                              <h2 class="text-xl font-bold">Create Post</h2>
-                              <button
-                                @click="showCreatePostModal = false"
-                                class="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100 transition-colors"
-                              >
-                                <i class="fa-solid fa-times"></i>
-                              </button>
-                            </div>
-
-                            <!-- Error Alert -->
-                            <div
-                              v-if="showErrorAlert && error"
-                              class="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg"
-                            >
-                              <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                  <i class="fa-solid fa-circle-exclamation text-red-500"></i>
-                                  <p class="text-red-700">{{ error }}</p>
-                                </div>
-                                <button
-                                  type="button"
-                                  @click="showErrorAlert = false"
-                                  class="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                                >
-                                  <i class="fa-solid fa-times"></i>
-                                </button>
-                              </div>
-                            </div>
-
-                            <form @submit.prevent="createPost" class="p-6 space-y-6">
-                              <!-- Post Content -->
-                              <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2"
-                                  >What's on your mind?</label
-                                >
-                                <textarea
-                                  v-model="postForm.content"
-                                  rows="4"
-                                  placeholder="Share your thoughts..."
-                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 resize-none"
-                                  :class="{
-                                    'border-red-300 focus:border-red-500': getCharacterCount.isAtLimit,
-                                    'border-yellow-300 focus:border-yellow-500':
-                                      getCharacterCount.isNearLimit && !getCharacterCount.isAtLimit,
-                                  }"
-                                  maxlength="5000"
-                                ></textarea>
-                                <div class="flex justify-between items-center mt-1">
-                                  <div class="text-xs text-gray-500">Press Ctrl+Enter to post quickly</div>
-                                  <div
-                                    class="text-xs mt-1"
-                                    :class="{
-                                      'text-red-500': getCharacterCount.isAtLimit,
-                                      'text-yellow-600':
-                                        getCharacterCount.isNearLimit && !getCharacterCount.isAtLimit,
-                                      'text-gray-500': !getCharacterCount.isNearLimit,
-                                    }"
-                                  >
-                                    {{ getCharacterCount.count }}/{{ getCharacterCount.max }}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <!-- Visibility -->
-                              <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                  <i class="fa-solid fa-eye mr-1"></i>
-                                  Visibility
-                                </label>
-                                <select
-                                  v-model="postForm.visibility"
-                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
-                                >
-                                  <option value="public">
-                                    <i class="fa-solid fa-globe"></i> Public - Anyone can see
-                                  </option>
-                                  <option value="friends">
-                                    <i class="fa-solid fa-user-friends"></i> Friends Only
-                                  </option>
-                                  <option value="private">
-                                    <i class="fa-solid fa-lock"></i> Private - Only you
-                                  </option>
-                                </select>
-                              </div>
-
-                              <!-- Media Upload -->
-                              <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                  <i class="fa-solid fa-images mr-1"></i>
-                                  Media ({{ postMediaFiles.length }}/10)
-                                </label>
-                                <div class="space-y-4">
-                                  <!-- Upload Button -->
-                                  <div class="flex items-center justify-center w-full">
-                                    <label
-                                      class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors"
-                                      :class="{
-                                        'border-gray-300 bg-gray-50 hover:bg-gray-100':
-                                          postMediaFiles.length < 10,
-                                        'border-gray-200 bg-gray-100 cursor-not-allowed':
-                                          postMediaFiles.length >= 10,
-                                      }"
-                                    >
-                                      <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <i
-                                          class="text-3xl mb-2"
-                                          :class="{
-                                            'fa-solid fa-cloud-upload-alt text-gray-400':
-                                              postMediaFiles.length < 10,
-                                            'fa-solid fa-ban text-gray-300': postMediaFiles.length >= 10,
-                                          }"
-                                        ></i>
-                                        <p
-                                          class="text-sm"
-                                          :class="
-                                            postMediaFiles.length >= 10 ? 'text-gray-400' : 'text-gray-500'
-                                          "
-                                        >
-                                          <span class="font-semibold">
-                                            {{
-                                              postMediaFiles.length >= 10
-                                                ? "Maximum files reached"
-                                                : "Click to upload"
-                                            }}
-                                          </span>
-                                          {{ postMediaFiles.length < 10 ? " or drag and drop" : "" }}
-                                        </p>
-                                        <p class="text-xs text-gray-500" v-if="postMediaFiles.length < 10">
-                                          Images or videos ({{ 10 - postMediaFiles.length }} remaining)
-                                        </p>
-                                      </div>
-                                      <input
-                                        type="file"
-                                        class="hidden"
-                                        multiple
-                                        accept="image/*,video/*"
-                                        @change="handlePostMediaUpload"
-                                        :disabled="postMediaFiles.length >= 10"
-                                      />
-                                    </label>
-                                  </div>
-
-                                  <!-- Media Previews -->
-                                  <div v-if="postMediaPreviews.length > 0" class="grid grid-cols-2 gap-4">
-                                    <div
-                                      v-for="(preview, index) in postMediaPreviews"
-                                      :key="index"
-                                      class="relative group"
-                                    >
-                                      <!-- Image Preview -->
-                                      <img
-                                        v-if="preview.type === 'image'"
-                                        :src="preview.url"
-                                        :alt="preview.name"
-                                        class="w-full h-32 object-cover rounded-lg"
-                                      />
-                                      <!-- Video Preview -->
-                                      <video
-                                        v-else
-                                        :src="preview.url"
-                                        class="w-full h-32 object-cover rounded-lg"
-                                        controls
-                                        preload="metadata"
-                                      ></video>
-
-                                      <!-- Remove Button -->
-                                      <button
-                                        type="button"
-                                        @click="removePostMedia(index)"
-                                        class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
-                                      >
-                                        <i class="fa-solid fa-times text-xs"></i>
-                                      </button>
-
-                                      <!-- File Info -->
-                                      <div
-                                        class="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded"
-                                      >
-                                        {{
-                                          preview.name.length > 15
-                                            ? preview.name.substring(0, 15) + "..."
-                                            : preview.name
-                                        }}
-                                      </div>
-
-                                      <!-- Media Context -->
-                                      <input
-                                        v-model="postForm.media_contexts[index]"
-                                        type="text"
-                                        placeholder="Add a caption..."
-                                        class="absolute bottom-0 left-0 right-0 bg-black/50 text-white placeholder-gray-300 px-2 py-1 text-xs rounded-b-lg border-none focus:outline-none focus:bg-black/70 transition-colors"
-                                        maxlength="200"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <!-- Tagged Users -->
-                              <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                  <i class="fa-solid fa-user-tag mr-1"></i>
-                                  Tag Friends
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Enter user IDs separated by commas (e.g., 1,2,3)"
-                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
-                                  @input="handleTaggedUsersInput"
-                                />
-                                <div class="flex justify-between items-center mt-1">
-                                  <p class="text-xs text-gray-500">Enter user IDs separated by commas</p>
-                                  <p v-if="postForm.tagged_user_ids.length > 0" class="text-xs text-blue-600">
-                                    {{ postForm.tagged_user_ids.length }} user(s) tagged
-                                  </p>
-                                </div>
-                              </div>
-
-                              <!-- Draft Status -->
-                              <div
-                                v-if="postForm.content.trim().length > 10"
-                                class="flex items-center gap-2 text-xs text-gray-500"
-                              >
-                                <i class="fa-solid fa-save"></i>
-                                <span>Draft auto-saved</span>
-                              </div>
-
-                              <!-- Form Actions -->
-                              <div
-                                class="sticky bottom-0 bg-white pt-4 pb-2 -mx-6 px-6 border-t flex justify-between items-center"
-                              >
-                                <div class="flex items-center gap-4">
-                                  <!-- Quick Actions -->
-                                  <div class="flex items-center gap-2 text-sm text-gray-600">
-                                    <button
-                                      type="button"
-                                      @click="loadDraft"
-                                      class="hover:text-blue-600 transition-colors"
-                                      title="Load saved draft"
-                                    >
-                                      <i class="fa-solid fa-file-import"></i>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      @click="clearDraft"
-                                      class="hover:text-red-600 transition-colors"
-                                      title="Clear draft"
-                                    >
-                                      <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                  </div>
-                                </div>
-
-                                <div class="flex gap-3">
-                                  <button
-                                    type="button"
-                                    @click="showCreatePostModal = false"
-                                    class="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                                  >
-                                    Cancel
-                                  </button>
-                                  <button
-                                    type="submit"
-                                    :disabled="!canSubmitPost"
-                                    class="px-6 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2"
-                                    :class="{
-                                      'bg-blue-600 hover:bg-blue-700': canSubmitPost,
-                                      'bg-gray-300 cursor-not-allowed': !canSubmitPost,
-                                    }"
-                                  >
-                                    <i class="fa-solid fa-paper-plane"></i>
-                                    Post
-                                    <span v-if="postMediaFiles.length > 0" class="text-xs">
-                                      ({{ postMediaFiles.length }} files)
-                                    </span>
-                                  </button>
-                                </div>
-                              </div>
-                            </form>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                     <div
                       v-if="!profileFriends?.friends?.length"
