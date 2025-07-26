@@ -366,8 +366,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-6">
-    <div class="lg:ml-20">
+  <div class="max-w-[90rem] mx-auto px-4 py-6">
+    <div class="lg:ml-[5rem]">
       <!-- Loading State -->
       <div v-if="Object.values(loading).some(Boolean)" class="space-y-4">
         <div class="h-64 animate-pulse rounded-lg bg-gray-200"></div>
@@ -385,7 +385,7 @@ onMounted(async () => {
       <!-- Profile Content -->
       <div v-else class="space-y-6">
         <!-- Cover Photo -->
-        <div class="relative h-64 overflow-hidden rounded-lg bg-gray-200">
+        <div class="relative h-[16rem] overflow-hidden rounded-lg bg-gray-200">
           <img
             v-if="profile?.cover_photo"
             :src="`/meta${profile.cover_photo}`"
@@ -396,7 +396,7 @@ onMounted(async () => {
 
         <!-- Profile Info -->
         <div class="relative">
-          <div class="absolute -top-16 left-8">
+          <div class="absolute -top-[4rem] left-[2rem]">
             <div class="h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-white shadow-lg">
               <img
                 v-if="profile?.profile_pic"
@@ -873,9 +873,22 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row gap-8 relative" :class="{ 'lg:justify-center': !isOwnProfile }">
+        <!-- Replace the main content section in your profile template with this -->
+
+        <div
+          class="grid gap-[2rem]"
+          :class="{
+            'lg:grid-cols-[1fr_20rem]': isOwnProfile,
+            'lg:justify-center': !isOwnProfile,
+          }"
+        >
           <!-- Main Content Area -->
-          <div class="w-full lg:w-[768px] flex-none" :class="{ 'lg:w-[900px]': !isOwnProfile }">
+          <div
+            class="w-full"
+            :class="{
+              'lg:max-w-4xl': !isOwnProfile,
+            }"
+          >
             <!-- Posts Section -->
             <div class="space-y-4">
               <h2 class="text-xl font-semibold">Posts</h2>
@@ -895,8 +908,8 @@ onMounted(async () => {
           </div>
 
           <!-- Right Sidebar - Only show for own profile -->
-          <div v-if="isOwnProfile" class="lg:w-80 flex-shrink-0 lg:absolute lg:right-0">
-            <div class="bg-white rounded-lg shadow p-6 sticky top-6">
+          <div v-if="isOwnProfile">
+            <div class="bg-white rounded-lg shadow p-[1.5rem]">
               <!-- Friends Section -->
               <div class="space-y-6">
                 <!-- Friends List -->
