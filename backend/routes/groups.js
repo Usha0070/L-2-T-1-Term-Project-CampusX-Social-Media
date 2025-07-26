@@ -177,15 +177,30 @@ router.get("/:id/posts", async (req, res, next) => {
   }
 });
 
-router.post("/:id/posts", async (req, res, next) => {
+router.post("/:id/posts", upload.fields([{ name: "media", maxCount: 10 }]), async (req, res, next) => {
   try {
-    const body = {
-      group_id: req.params.id,
-      ...schema.GroupPostSchema.parse(req.body),
-    };
-    if (!(await db.validateUserGroupMember(req.user.user_id, body.group_id)))
+    const user_id = req.user.user_id;
+    const group_id = req.params.id;
+    if (!(await db.validateUserGroupMember(user_id, group_id)))
       return res.status(400).json({ error: "Access denied" });
-    const result = await db.createGroupPost(body);
+
+    const body = {
+      user_id: req.user.user_id,
+      ...schema.PostSchema.parse(req.body),
+      ...(req.files?.media && {
+        post_medias: req.files.media.map((file, index) => ({
+          path: file.path,
+          context: req.body.media_contexts?.[index],
+          order_index: index + 1,
+        })),
+      }),
+    };
+
+    const post = await db.createPost(body, true);
+    const result = await db.createGroupPost({
+      group_id,
+      post_id: post.post_id,
+    });
     if (result.error) return res.status(200).json(result);
     res.status(400).json(result);
   } catch (err) {

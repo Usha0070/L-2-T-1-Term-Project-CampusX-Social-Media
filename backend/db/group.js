@@ -210,7 +210,7 @@ export async function createGroupPost(postData) {
   try {
     await sql`
       INSERT INTO group_post
-      VALUES (${postData.post_id}, ${postData.group_id}, 'Pending')
+      VALUES (${postData.post_id}, ${postData.group_id}, 'Accepted')
     `;
     return { success: true };
   } catch (err) {

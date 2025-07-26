@@ -81,7 +81,7 @@ async function insertPostMedia(postData, post_id, tx) {
   }
 }
 
-export async function createPost(postData) {
+export async function createPost(postData, isGroupPost = false) {
   try {
     const result = await sql.begin(async (tx) => {
       const post = {
@@ -98,7 +98,7 @@ export async function createPost(postData) {
       const post_id = postRow?.post_id;
       if (!post_id) throw new Error("Failed to create post");
 
-      await insertPostTag(postData, post_id, tx);
+      if (!isGroupPost) await insertPostTag(postData, post_id, tx);
       await insertPostMedia(postData, post_id, tx);
       if (postData.market) await createMarketPost({ post_id: post_id, ...postData.market }, tx);
       if (postData.tuition) await createTuitionPost({ post_id: post_id, ...postData.tuition }, tx);
