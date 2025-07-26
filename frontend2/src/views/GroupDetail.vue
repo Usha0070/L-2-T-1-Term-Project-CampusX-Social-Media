@@ -436,7 +436,7 @@ const fetchGroupMembers = async () => {
   try {
     loading.value.members = true;
     const response = await axios.get(`/api/groups/${route.params.id}/members`);
-    groupMembers.value = response.data.filter((member) => member.user_id !== getCurrentUserId());
+    groupMembers.value = response.data;
   } catch (err) {
     console.error("Error fetching group members:", err);
   } finally {

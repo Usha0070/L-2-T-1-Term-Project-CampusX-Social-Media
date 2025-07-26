@@ -1,3 +1,5 @@
 remove group posts from feed and profile
-order posts in groups
 remove shared posts
+show group members
+add pagination to group
+edit group info
