@@ -49,6 +49,244 @@ const editForm = ref({
 const profilePicPreview = ref(null);
 const coverPhotoPreview = ref(null);
 
+const showCreatePostModal = ref(false);
+const postForm = ref({
+  content: "",
+  visibility: "public",
+  shared_post_id: null,
+  media_contexts: [],
+  tagged_user_ids: [],
+  market: null,
+  tuition: null,
+});
+const postMediaFiles = ref([]);
+const postMediaPreviews = ref([]);
+
+const initPostForm = () => {
+  postForm.value = {
+    content: "",
+    visibility: "public",
+    shared_post_id: null,
+    media_contexts: [],
+    tagged_user_ids: [],
+    market: null,
+    tuition: null,
+  };
+  postMediaFiles.value = [];
+  postMediaPreviews.value = [];
+};
+
+const handlePostMediaUpload = (event) => {
+  const files = Array.from(event.target.files);
+
+  // Check if adding these files would exceed the limit
+  if (postMediaFiles.value.length + files.length > 10) {
+    error.value = "Maximum 10 media files allowed";
+    showErrorAlert.value = true;
+    return;
+  }
+
+  files.forEach((file) => {
+    // Check file size (optional - e.g., 50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
+      error.value = `File ${file.name} is too large. Maximum size is 50MB.`;
+      showErrorAlert.value = true;
+      return;
+    }
+
+    postMediaFiles.value.push(file);
+    postForm.value.media_contexts.push("");
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      postMediaPreviews.value.push({
+        url: e.target.result,
+        type: file.type.startsWith("image/") ? "image" : "video",
+        name: file.name,
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Clear the input so the same file can be selected again if needed
+  event.target.value = "";
+};
+
+const removePostMedia = (index) => {
+  postMediaFiles.value.splice(index, 1);
+  postMediaPreviews.value.splice(index, 1);
+  postForm.value.media_contexts.splice(index, 1);
+};
+
+const createPost = async () => {
+  try {
+    showErrorAlert.value = false;
+
+    // Validate required fields
+    if (!postForm.value.content.trim() && postMediaFiles.value.length === 0) {
+      error.value = "Please add some content or media to your post";
+      showErrorAlert.value = true;
+      return;
+    }
+
+    const formData = new FormData();
+
+    // Add text content
+    if (postForm.value.content.trim()) {
+      formData.append("content", postForm.value.content.trim());
+    }
+
+    formData.append("visibility", postForm.value.visibility);
+
+    // Add shared post ID if exists
+    if (postForm.value.shared_post_id) {
+      formData.append("shared_post_id", postForm.value.shared_post_id.toString());
+    }
+
+    // Add media files
+    postMediaFiles.value.forEach((file) => {
+      formData.append("media", file);
+    });
+
+    // Add media contexts (captions)
+    postForm.value.media_contexts.forEach((context, index) => {
+      formData.append(`media_contexts[${index}]`, context || "");
+    });
+
+    // Add tagged users
+    if (postForm.value.tagged_user_ids.length > 0) {
+      postForm.value.tagged_user_ids.forEach((userId, index) => {
+        formData.append(`tagged_user_ids[${index}]`, userId.toString());
+      });
+    }
+
+    // Add market data if exists
+    if (postForm.value.market) {
+      formData.append("market", JSON.stringify(postForm.value.market));
+    }
+
+    // Add tuition data if exists
+    if (postForm.value.tuition) {
+      formData.append("tuition", JSON.stringify(postForm.value.tuition));
+    }
+
+    // Make the API call
+    const response = await axios.post("/api/posts", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    // Success handling
+    if (response.status === 201) {
+      // Refresh posts after successful creation
+      await fetchUserData();
+
+      // Close modal and reset form
+      showCreatePostModal.value = false;
+      initPostForm();
+
+      // Optional: Show success message
+      // You can add a success toast/notification here
+    }
+  } catch (err) {
+    console.error("Error creating post:", err);
+
+    // Handle different types of errors
+    if (err.response?.status === 400) {
+      error.value = err.response.data?.message || err.response.data?.error || "Invalid post data";
+    } else if (err.response?.status === 413) {
+      error.value = "File size too large. Please reduce file sizes and try again.";
+    } else if (err.response?.status === 401) {
+      error.value = "You need to be logged in to create posts";
+    } else {
+      error.value = err.response?.data?.error || err.message || "Failed to create post";
+    }
+
+    showErrorAlert.value = true;
+  }
+};
+
+// Helper function to parse tagged user IDs from comma-separated input
+const handleTaggedUsersInput = (event) => {
+  const value = event.target.value;
+  if (!value.trim()) {
+    postForm.value.tagged_user_ids = [];
+    return;
+  }
+
+  const userIds = value
+    .split(",")
+    .map((id) => {
+      const trimmed = id.trim();
+      const parsed = parseInt(trimmed);
+      return isNaN(parsed) ? null : parsed;
+    })
+    .filter((id) => id !== null && id > 0); // Remove invalid IDs
+
+  postForm.value.tagged_user_ids = userIds;
+};
+
+// Helper function to get character count with proper formatting
+const getCharacterCount = computed(() => {
+  const count = postForm.value.content.length;
+  const max = 5000;
+  const percentage = (count / max) * 100;
+
+  return {
+    count,
+    max,
+    percentage,
+    isNearLimit: percentage > 80,
+    isAtLimit: percentage >= 100,
+  };
+});
+
+// Helper function to check if post can be submitted
+const canSubmitPost = computed(() => {
+  const hasContent = postForm.value.content.trim().length > 0;
+  const hasMedia = postMediaFiles.value.length > 0;
+  const isNotTooLong = postForm.value.content.length <= 5000;
+
+  return (hasContent || hasMedia) && isNotTooLong;
+});
+
+// Initialize post form when component mounts (add this to your existing onMounted)
+onMounted(() => {
+  // ... your existing onMounted code
+  initPostForm();
+});
+
+// Optional: Auto-save draft functionality
+const saveDraft = () => {
+  const draft = {
+    content: postForm.value.content,
+    visibility: postForm.value.visibility,
+    timestamp: Date.now(),
+  };
+  localStorage.setItem("post_draft", JSON.stringify(draft));
+};
+
+const loadDraft = () => {
+  try {
+    const draft = localStorage.getItem("post_draft");
+    if (draft) {
+      const parsed = JSON.parse(draft);
+      // Only load if draft is less than 24 hours old
+      if (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+        postForm.value.content = parsed.content || "";
+        postForm.value.visibility = parsed.visibility || "public";
+      }
+    }
+  } catch (err) {
+    console.error("Error loading draft:", err);
+  }
+};
+
+const clearDraft = () => {
+  localStorage.removeItem("post_draft");
+};
+
 const handleFileUpload = (event, type) => {
   const file = event.target.files[0];
   if (file) {
@@ -358,6 +596,18 @@ watch(
     await fetchUserData();
   }
 );
+
+// Watch for content changes to auto-save draft
+watch(
+  () => postForm.value.content,
+  (newContent) => {
+    if (newContent.trim().length > 10) {
+      // Only save if substantial content
+      saveDraft();
+    }
+  },
+  { debounce: 1000 }
+); // Debounce to avoid too frequent saves
 
 onMounted(async () => {
   await fetchMyFriends();
@@ -872,7 +1122,6 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-
         <!-- Replace the main content section in your profile template with this -->
 
         <div
@@ -889,6 +1138,62 @@ onMounted(async () => {
               'lg:max-w-4xl': !isOwnProfile,
             }"
           >
+            <!-- Create Post Section - Only show for own profile -->
+            <div v-if="isOwnProfile" class="bg-white rounded-lg shadow p-6 mb-6">
+              <div class="flex items-center gap-4">
+                <!-- User Profile Picture -->
+                <div class="h-12 w-12 overflow-hidden rounded-full bg-gray-200 flex-shrink-0">
+                  <img
+                    v-if="profile?.profile_pic"
+                    :src="`/meta${profile.profile_pic}`"
+                    class="h-full w-full object-cover"
+                    alt="Your profile picture"
+                  />
+                  <div v-else class="h-full w-full flex items-center justify-center text-gray-400">
+                    <i class="fa-solid fa-user text-xl"></i>
+                  </div>
+                </div>
+
+                <!-- Create Post Button -->
+                <button
+                  @click="
+                    showCreatePostModal = true;
+                    loadDraft();
+                  "
+                  class="flex-grow text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-colors duration-200"
+                >
+                  What's on your mind{{ user?.first_name ? ", " + user.first_name : "" }}?
+                </button>
+
+                <!-- Quick Action Buttons -->
+                <div class="flex gap-2">
+                  <button
+                    @click="
+                      showCreatePostModal = true;
+                      loadDraft();
+                    "
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Create Post"
+                  >
+                    <i class="fa-solid fa-pen text-lg"></i>
+                    <span class="hidden sm:inline">Post</span>
+                  </button>
+
+                  <button
+                    @click="
+                      showCreatePostModal = true;
+                      loadDraft();
+                    "
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                    title="Add Photos/Videos"
+                  >
+                    <i class="fa-solid fa-images text-lg"></i>
+                    <span class="hidden sm:inline">Media</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Posts Section -->
             <div class="space-y-4">
               <h2 class="text-xl font-semibold">Posts</h2>
@@ -950,6 +1255,307 @@ onMounted(async () => {
                           </p>
                         </div>
                       </router-link>
+
+                      <!-- Enhanced Create Post Modal Template - FIXED VERSION -->
+                      <div v-if="showCreatePostModal" class="fixed inset-0 z-50">
+                        <!-- Backdrop -->
+                        <div
+                          class="absolute inset-0 bg-black/20 backdrop-blur-sm"
+                          @click="showCreatePostModal = false"
+                        ></div>
+
+                        <!-- Modal -->
+                        <div class="relative min-h-screen flex items-center justify-center p-4">
+                          <div
+                            class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                            @click.stop
+                          >
+                            <!-- Modal Header -->
+                            <div
+                              class="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center z-10"
+                            >
+                              <h2 class="text-xl font-bold">Create Post</h2>
+                              <button
+                                @click="showCreatePostModal = false"
+                                class="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100 transition-colors"
+                              >
+                                <i class="fa-solid fa-times"></i>
+                              </button>
+                            </div>
+
+                            <!-- Error Alert -->
+                            <div
+                              v-if="showErrorAlert && error"
+                              class="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg"
+                            >
+                              <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                  <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+                                  <p class="text-red-700">{{ error }}</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  @click="showErrorAlert = false"
+                                  class="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                                >
+                                  <i class="fa-solid fa-times"></i>
+                                </button>
+                              </div>
+                            </div>
+
+                            <form @submit.prevent="createPost" class="p-6 space-y-6">
+                              <!-- Post Content -->
+                              <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2"
+                                  >What's on your mind?</label
+                                >
+                                <textarea
+                                  v-model="postForm.content"
+                                  rows="4"
+                                  placeholder="Share your thoughts..."
+                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                                  :class="{
+                                    'border-red-300 focus:border-red-500': getCharacterCount.isAtLimit,
+                                    'border-yellow-300 focus:border-yellow-500':
+                                      getCharacterCount.isNearLimit && !getCharacterCount.isAtLimit,
+                                  }"
+                                  maxlength="5000"
+                                ></textarea>
+                                <div class="flex justify-between items-center mt-1">
+                                  <div class="text-xs text-gray-500">Press Ctrl+Enter to post quickly</div>
+                                  <div
+                                    class="text-xs mt-1"
+                                    :class="{
+                                      'text-red-500': getCharacterCount.isAtLimit,
+                                      'text-yellow-600':
+                                        getCharacterCount.isNearLimit && !getCharacterCount.isAtLimit,
+                                      'text-gray-500': !getCharacterCount.isNearLimit,
+                                    }"
+                                  >
+                                    {{ getCharacterCount.count }}/{{ getCharacterCount.max }}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <!-- Visibility -->
+                              <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                  <i class="fa-solid fa-eye mr-1"></i>
+                                  Visibility
+                                </label>
+                                <select
+                                  v-model="postForm.visibility"
+                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                                >
+                                  <option value="public">
+                                    <i class="fa-solid fa-globe"></i> Public - Anyone can see
+                                  </option>
+                                  <option value="friends">
+                                    <i class="fa-solid fa-user-friends"></i> Friends Only
+                                  </option>
+                                  <option value="private">
+                                    <i class="fa-solid fa-lock"></i> Private - Only you
+                                  </option>
+                                </select>
+                              </div>
+
+                              <!-- Media Upload -->
+                              <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                  <i class="fa-solid fa-images mr-1"></i>
+                                  Media ({{ postMediaFiles.length }}/10)
+                                </label>
+                                <div class="space-y-4">
+                                  <!-- Upload Button -->
+                                  <div class="flex items-center justify-center w-full">
+                                    <label
+                                      class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors"
+                                      :class="{
+                                        'border-gray-300 bg-gray-50 hover:bg-gray-100':
+                                          postMediaFiles.length < 10,
+                                        'border-gray-200 bg-gray-100 cursor-not-allowed':
+                                          postMediaFiles.length >= 10,
+                                      }"
+                                    >
+                                      <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <i
+                                          class="text-3xl mb-2"
+                                          :class="{
+                                            'fa-solid fa-cloud-upload-alt text-gray-400':
+                                              postMediaFiles.length < 10,
+                                            'fa-solid fa-ban text-gray-300': postMediaFiles.length >= 10,
+                                          }"
+                                        ></i>
+                                        <p
+                                          class="text-sm"
+                                          :class="
+                                            postMediaFiles.length >= 10 ? 'text-gray-400' : 'text-gray-500'
+                                          "
+                                        >
+                                          <span class="font-semibold">
+                                            {{
+                                              postMediaFiles.length >= 10
+                                                ? "Maximum files reached"
+                                                : "Click to upload"
+                                            }}
+                                          </span>
+                                          {{ postMediaFiles.length < 10 ? " or drag and drop" : "" }}
+                                        </p>
+                                        <p class="text-xs text-gray-500" v-if="postMediaFiles.length < 10">
+                                          Images or videos ({{ 10 - postMediaFiles.length }} remaining)
+                                        </p>
+                                      </div>
+                                      <input
+                                        type="file"
+                                        class="hidden"
+                                        multiple
+                                        accept="image/*,video/*"
+                                        @change="handlePostMediaUpload"
+                                        :disabled="postMediaFiles.length >= 10"
+                                      />
+                                    </label>
+                                  </div>
+
+                                  <!-- Media Previews -->
+                                  <div v-if="postMediaPreviews.length > 0" class="grid grid-cols-2 gap-4">
+                                    <div
+                                      v-for="(preview, index) in postMediaPreviews"
+                                      :key="index"
+                                      class="relative group"
+                                    >
+                                      <!-- Image Preview -->
+                                      <img
+                                        v-if="preview.type === 'image'"
+                                        :src="preview.url"
+                                        :alt="preview.name"
+                                        class="w-full h-32 object-cover rounded-lg"
+                                      />
+                                      <!-- Video Preview -->
+                                      <video
+                                        v-else
+                                        :src="preview.url"
+                                        class="w-full h-32 object-cover rounded-lg"
+                                        controls
+                                        preload="metadata"
+                                      ></video>
+
+                                      <!-- Remove Button -->
+                                      <button
+                                        type="button"
+                                        @click="removePostMedia(index)"
+                                        class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
+                                      >
+                                        <i class="fa-solid fa-times text-xs"></i>
+                                      </button>
+
+                                      <!-- File Info -->
+                                      <div
+                                        class="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded"
+                                      >
+                                        {{
+                                          preview.name.length > 15
+                                            ? preview.name.substring(0, 15) + "..."
+                                            : preview.name
+                                        }}
+                                      </div>
+
+                                      <!-- Media Context -->
+                                      <input
+                                        v-model="postForm.media_contexts[index]"
+                                        type="text"
+                                        placeholder="Add a caption..."
+                                        class="absolute bottom-0 left-0 right-0 bg-black/50 text-white placeholder-gray-300 px-2 py-1 text-xs rounded-b-lg border-none focus:outline-none focus:bg-black/70 transition-colors"
+                                        maxlength="200"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <!-- Tagged Users -->
+                              <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                  <i class="fa-solid fa-user-tag mr-1"></i>
+                                  Tag Friends
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Enter user IDs separated by commas (e.g., 1,2,3)"
+                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                                  @input="handleTaggedUsersInput"
+                                />
+                                <div class="flex justify-between items-center mt-1">
+                                  <p class="text-xs text-gray-500">Enter user IDs separated by commas</p>
+                                  <p v-if="postForm.tagged_user_ids.length > 0" class="text-xs text-blue-600">
+                                    {{ postForm.tagged_user_ids.length }} user(s) tagged
+                                  </p>
+                                </div>
+                              </div>
+
+                              <!-- Draft Status -->
+                              <div
+                                v-if="postForm.content.trim().length > 10"
+                                class="flex items-center gap-2 text-xs text-gray-500"
+                              >
+                                <i class="fa-solid fa-save"></i>
+                                <span>Draft auto-saved</span>
+                              </div>
+
+                              <!-- Form Actions -->
+                              <div
+                                class="sticky bottom-0 bg-white pt-4 pb-2 -mx-6 px-6 border-t flex justify-between items-center"
+                              >
+                                <div class="flex items-center gap-4">
+                                  <!-- Quick Actions -->
+                                  <div class="flex items-center gap-2 text-sm text-gray-600">
+                                    <button
+                                      type="button"
+                                      @click="loadDraft"
+                                      class="hover:text-blue-600 transition-colors"
+                                      title="Load saved draft"
+                                    >
+                                      <i class="fa-solid fa-file-import"></i>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      @click="clearDraft"
+                                      class="hover:text-red-600 transition-colors"
+                                      title="Clear draft"
+                                    >
+                                      <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div class="flex gap-3">
+                                  <button
+                                    type="button"
+                                    @click="showCreatePostModal = false"
+                                    class="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="submit"
+                                    :disabled="!canSubmitPost"
+                                    class="px-6 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2"
+                                    :class="{
+                                      'bg-blue-600 hover:bg-blue-700': canSubmitPost,
+                                      'bg-gray-300 cursor-not-allowed': !canSubmitPost,
+                                    }"
+                                  >
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    Post
+                                    <span v-if="postMediaFiles.length > 0" class="text-xs">
+                                      ({{ postMediaFiles.length }} files)
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div
                       v-if="!profileFriends?.friends?.length"
