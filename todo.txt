@@ -1,0 +1,3 @@
+remove group posts from feed and profile
+order posts in groups
+remove shared posts

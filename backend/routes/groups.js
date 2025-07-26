@@ -201,8 +201,8 @@ router.post("/:id/posts", upload.fields([{ name: "media", maxCount: 10 }]), asyn
       group_id,
       post_id: post.post_id,
     });
-    if (result.error) return res.status(200).json(result);
-    res.status(400).json(result);
+    if (result.error) return res.status(400).json(result);
+    res.status(201).json(result);
   } catch (err) {
     next(err);
   }

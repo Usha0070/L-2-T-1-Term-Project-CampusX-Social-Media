@@ -47,7 +47,9 @@ export async function getGroupMembersByGroupId(group_id) {
 
 export async function getGroupPostsByGroupId(group_id) {
   const posts = await sql`
-    SELECT post_id, status FROM group_post WHERE group_id = ${group_id}
+    SELECT post_id, status FROM group_post
+    WHERE group_id = ${group_id}
+    ORDER BY post_id DESC
   `;
   return posts;
 }
