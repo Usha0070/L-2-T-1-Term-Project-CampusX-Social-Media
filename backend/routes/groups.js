@@ -208,24 +208,31 @@ router.post("/:id/posts", upload.fields([{ name: "media", maxCount: 10 }]), asyn
   }
 });
 
-router.put("/:id/posts/:pid", async (req, res, next) => {
+router.put("/:id/posts/:pid", upload.fields([{ name: "media", maxCount: 10 }]), async (req, res, next) => {
   try {
-    const body = {
-      group_id: req.params.id,
-      post_id: req.params.pid,
-      ...schema.GroupPostSchema2.parse(req.body),
-    };
-    if (!(await db.validateUserGroupMember(req.user.user_id, body.group_id)))
-      return res.status(400).json({ error: "Access denied" });
-    if (!(await db.validateUserGroupPost(req.user.user_id, body.group_id, body.post_id)))
-      return res.status(400).json({ error: "Access denied" });
-    const result = await db.modifyGroupPost(body);
-    if (result.error) return res.status(200).json(result);
-    res.status(400).json(result);
   } catch (err) {
     next(err);
   }
 });
+
+// router.put("/:id/posts/:pid", async (req, res, next) => {
+//   try {
+//     const body = {
+//       group_id: req.params.id,
+//       post_id: req.params.pid,
+//       ...schema.GroupPostSchema2.parse(req.body),
+//     };
+//     if (!(await db.validateUserGroupMember(req.user.user_id, body.group_id)))
+//       return res.status(400).json({ error: "Access denied" });
+//     if (!(await db.validateUserGroupPost(req.user.user_id, body.group_id, body.post_id)))
+//       return res.status(400).json({ error: "Access denied" });
+//     const result = await db.modifyGroupPost(body);
+//     if (result.error) return res.status(200).json(result);
+//     res.status(400).json(result);
+//   } catch (err) {
+//     next(err);
+//   }
+// });
 
 router.delete("/:id/posts/:pid", async (req, res, next) => {
   try {

@@ -74,7 +74,7 @@ const TuitionSchema = z.object({
   location: z.string(),
   remunation: z.coerce.number(),
   status: z.enum(["Available", "Booked"]),
-  preferred_gender: z.enum(["Male", "Female"]).optional(),
+  preferred_gender: z.enum(["Male", "Female"]).optional().nullable(),
   subjects: z.array(z.string()),
 });
 

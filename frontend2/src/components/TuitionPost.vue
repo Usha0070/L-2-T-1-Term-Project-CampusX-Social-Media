@@ -38,7 +38,6 @@ const goToChat = async () => {
       <div class="mb-4">
         <div class="flex items-start justify-between mb-2">
           <h3 class="font-medium text-gray-900 line-clamp-2">{{ post.content }}</h3>
-          <p class="text-lg font-bold text-blue-600 ml-2">৳{{ post.tuition_post.remunation }}/mo</p>
         </div>
 
         <!-- Subject Tags -->
@@ -69,7 +68,7 @@ const goToChat = async () => {
         </div>
         <div class="flex items-center">
           <i class="fa-solid fa-venus-mars mr-2"></i>
-          <span>Preferred: {{ post.tuition_post.preferred_gender }}</span>
+          <span>Preferred: {{ post.tuition_post.preferred_gender || "Any" }}</span>
         </div>
       </div>
 
@@ -80,8 +79,7 @@ const goToChat = async () => {
           {{ new Date(post.created_at).toLocaleDateString() }}
         </span>
         <span>
-          <i class="fa-regular fa-heart mr-1"></i>
-          {{ post.likes?.length || 0 }} likes
+          <p class="text-lg font-bold text-blue-600 ml-2">৳{{ post.tuition_post.remunation }}/mo</p>
         </span>
       </div>
     </div>
