@@ -53,7 +53,6 @@ router.put("/:id", upload.fields([{ name: "media", maxCount: 10 }]), async (req,
     };
     if (!(await db.validateUserPost(body.user_id, body.post_id)))
       return res.status(400).json({ error: "Access denied" });
-    console.log(body);
     const result = await db.updatePost(body);
     if (result.error) return res.status(400).json(result);
     res.status(201).json(result);

@@ -55,9 +55,9 @@ export async function getFeedByUserId(user_id, limit = 20, offset = 0) {
   }
 }
 
-async function insertPostTag(postData, post_id, tx) {
+async function insertPostTag(postData, post_id, tx, insertSelf = true) {
   const post_tags = [
-    postData.user_id,
+    ...(insertSelf ? [postData.user_id] : []),
     ...(Array.isArray(postData.tagged_user_ids) ? postData.tagged_user_ids : []),
   ];
   for (const user of post_tags) {
@@ -143,7 +143,7 @@ export async function updatePost(postData) {
       await tx`
         DELETE FROM post_tag WHERE post_id = ${postData.post_id}
       `;
-      await insertPostTag(postData, postData.post_id, tx);
+      await insertPostTag(postData, postData.post_id, tx, false);
 
       await tx`
         DELETE FROM post_media WHERE post_id = ${postData.post_id}
