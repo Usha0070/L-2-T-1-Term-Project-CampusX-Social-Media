@@ -71,8 +71,6 @@ router.put(
         profile_pic: req.files?.profile_pic?.[0]?.path,
         cover_photo: req.files?.cover_photo?.[0]?.path,
       };
-      if (!(await db.validateUserGroupMod(req.user.user_id, body.group_id)))
-        return res.status(400).json({ error: "Access denied" });
 
       const result = await db.modifyGroup(body);
       if (result.error) return res.status(400).json(result);

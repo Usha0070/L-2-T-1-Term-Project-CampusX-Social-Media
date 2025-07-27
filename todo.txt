@@ -3,3 +3,5 @@ remove shared posts
 show group members
 add pagination to group
 edit group info
+
+edit post
