@@ -229,6 +229,14 @@ const createMarketplacePost = async () => {
   }
 };
 
+const handlePostUpdated = async () => {
+  await fetchMarketplacePosts();
+};
+
+const handlePostDeleted = (postId) => {
+  posts.value = posts.value.filter((post) => post.post_id !== postId);
+};
+
 onMounted(async () => {
   await fetchMarketplacePosts();
 });
@@ -571,7 +579,13 @@ onMounted(async () => {
 
     <!-- Items Grid -->
     <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <MarketplacePost v-for="post in filteredPosts" :key="post.post_id" :post="post" />
+      <MarketplacePost
+        v-for="post in filteredPosts"
+        :key="post.post_id"
+        :post="post"
+        @postUpdated="handlePostUpdated"
+        @postDeleted="handlePostDeleted"
+      />
     </div>
 
     <!-- Empty State -->
