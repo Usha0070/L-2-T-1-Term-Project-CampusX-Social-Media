@@ -175,6 +175,18 @@ export async function updatePost(postData) {
   }
 }
 
+export async function deletePost(post_id) {
+  try {
+    await sql`
+      DELETE FROM post WHERE post_id = ${post_id};
+    `;
+    return { success: true };
+  } catch (err) {
+    console.log("Error in deletePost:", err);
+    return { error: err.message };
+  }
+}
+
 export async function getUserIdByPostId(post_id) {
   const [row] = await sql`
     SELECT author_id FROM post

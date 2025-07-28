@@ -61,6 +61,20 @@ router.put("/:id", upload.fields([{ name: "media", maxCount: 10 }]), async (req,
   }
 });
 
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const user_id = req.user.user_id;
+    const post_id = req.params.id;
+    if (!(await db.validateUserPost(user_id, post_id)))
+      return res.status(400).json({ error: "Access denied" });
+    const result = await db.deletePost(post_id);
+    if (result.error) return res.status(400).json(result);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post("/:id/likes", async (req, res, next) => {
   try {
     const user_id = req.user.user_id;

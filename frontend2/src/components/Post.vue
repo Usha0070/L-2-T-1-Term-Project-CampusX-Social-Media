@@ -30,6 +30,10 @@ const showErrorAlert = ref(false);
 const editLoading = ref(false);
 const error = ref(null);
 
+// Delete post states
+const showDeleteConfirm = ref(false);
+const deleteLoading = ref(false);
+
 const editForm = ref({
   content: "",
   visibility: "public",
@@ -141,6 +145,47 @@ const deleteComment = async (commentId) => {
   }
 };
 
+// Delete post functions
+const showDeleteConfirmation = () => {
+  showDeleteConfirm.value = true;
+};
+
+const hideDeleteConfirmation = () => {
+  showDeleteConfirm.value = false;
+};
+
+const deletePost = async () => {
+  if (deleteLoading.value) return;
+
+  try {
+    deleteLoading.value = true;
+    await axios.delete(`/api/posts/${props.post.post_id}`);
+
+    // Close modals and refresh page
+    showDeleteConfirm.value = false;
+    showEditModal.value = false;
+    window.location.reload();
+  } catch (err) {
+    console.error("Error deleting post:", err);
+
+    // Handle different types of errors
+    if (err.response?.status === 404) {
+      error.value = "Post not found or already deleted";
+    } else if (err.response?.status === 403) {
+      error.value = "You don't have permission to delete this post";
+    } else if (err.response?.status === 401) {
+      error.value = "You need to be logged in to delete posts";
+    } else {
+      error.value = err.response?.data?.error || err.message || "Failed to delete post";
+    }
+
+    showErrorAlert.value = true;
+    showDeleteConfirm.value = false;
+  } finally {
+    deleteLoading.value = false;
+  }
+};
+
 // Edit modal functions - matching profile modal pattern
 const initEditForm = () => {
   if (props.post) {
@@ -169,6 +214,7 @@ const openEditModal = () => {
 const closeEditModal = () => {
   showEditModal.value = false;
   showErrorAlert.value = false;
+  showDeleteConfirm.value = false;
 
   // Clean up object URLs to prevent memory leaks
   editMediaPreviews.value.forEach((preview) => {
@@ -970,32 +1016,101 @@ const formatDate = (dateString) => {
             </div>
 
             <!-- Form Actions -->
-            <div class="sticky bottom-0 bg-white pt-4 pb-2 -mx-6 px-6 border-t flex justify-end gap-3">
+            <div
+              class="sticky bottom-0 bg-white pt-4 pb-2 -mx-6 px-6 border-t flex justify-between items-center"
+            >
+              <!-- Delete Button -->
               <button
                 type="button"
-                @click="closeEditModal"
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                @click="showDeleteConfirmation"
+                class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
               >
-                Cancel
+                <i class="fa-solid fa-trash"></i>
+                Delete Post
               </button>
-              <button
-                type="submit"
-                :disabled="!canSubmitEdit || editLoading"
-                class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2"
-                :class="{
-                  'bg-blue-600 hover:bg-blue-700': canSubmitEdit && !editLoading,
-                  'bg-gray-300 cursor-not-allowed': !canSubmitEdit || editLoading,
-                }"
-              >
-                <i v-if="editLoading" class="fa-solid fa-spinner fa-spin"></i>
-                <i v-else class="fa-solid fa-save"></i>
-                {{ editLoading ? "Updating..." : "Update Post" }}
-                <span v-if="editMediaFiles.length > 0" class="text-xs">
-                  (+{{ editMediaFiles.length }} files)
-                </span>
-              </button>
+
+              <!-- Right side buttons -->
+              <div class="flex gap-3">
+                <button
+                  type="button"
+                  @click="closeEditModal"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  :disabled="!canSubmitEdit || editLoading"
+                  class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2"
+                  :class="{
+                    'bg-blue-600 hover:bg-blue-700': canSubmitEdit && !editLoading,
+                    'bg-gray-300 cursor-not-allowed': !canSubmitEdit || editLoading,
+                  }"
+                >
+                  <i v-if="editLoading" class="fa-solid fa-spinner fa-spin"></i>
+                  <i v-else class="fa-solid fa-save"></i>
+                  {{ editLoading ? "Updating..." : "Update Post" }}
+                  <span v-if="editMediaFiles.length > 0" class="text-xs">
+                    (+{{ editMediaFiles.length }} files)
+                  </span>
+                </button>
+              </div>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteConfirm" class="fixed inset-0 z-[60]">
+      <!-- Backdrop -->
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+      <!-- Modal -->
+      <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md" @click.stop>
+          <!-- Modal Header -->
+          <div class="px-6 py-4 border-b">
+            <h3 class="text-lg font-bold text-red-600 flex items-center gap-2">
+              <i class="fa-solid fa-exclamation-triangle"></i>
+              Delete Post
+            </h3>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="p-6">
+            <p class="text-gray-700 mb-4">
+              Are you sure you want to delete this post? This action cannot be undone.
+            </p>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p class="text-sm text-red-700">
+                <i class="fa-solid fa-info-circle mr-1"></i>
+                This will permanently remove your post, all its media, comments, and likes.
+              </p>
+            </div>
+          </div>
+
+          <!-- Modal Actions -->
+          <div class="px-6 py-4 border-t flex justify-end gap-3">
+            <button
+              type="button"
+              @click="hideDeleteConfirmation"
+              :disabled="deleteLoading"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="deletePost"
+              :disabled="deleteLoading"
+              class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+            >
+              <i v-if="deleteLoading" class="fa-solid fa-spinner fa-spin"></i>
+              <i v-else class="fa-solid fa-trash"></i>
+              {{ deleteLoading ? "Deleting..." : "Delete Post" }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

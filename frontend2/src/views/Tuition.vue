@@ -1,14 +1,12 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import axios from "../utils/axios";
-import { getCurrentUserId } from "../utils/auth";
 import TuitionPost from "../components/TuitionPost.vue";
 
 const TUITION_GROUP_ID = 5;
 const posts = ref([]);
 const loading = ref({ posts: true, creating: false });
 const error = ref(null);
-const currentUserId = ref(getCurrentUserId());
 
 // Filter states
 const selectedClass = ref("all");
@@ -30,11 +28,11 @@ const postForm = ref({
   visibility: "public",
   tuition: {
     class: "",
-    subjects: [], // Array of subject names
-    remunation: "", // Changed from 'salary' to 'remunation'
-    location: "", // Location name (will be converted to location_id in backend)
+    subjects: [],
+    remunation: "",
+    location: "",
     preferred_gender: "Any",
-    num_students: 1, // Added num_students field
+    num_students: 1,
     status: "Available",
   },
 });
@@ -190,6 +188,10 @@ const resetPostForm = () => {
   showErrorAlert.value = false;
   newClassName.value = "";
   newLocationName.value = "";
+};
+
+const handlePostDeleted = (postId) => {
+  posts.value = posts.value.filter((post) => post.post_id !== postId);
 };
 
 const createTuitionPost = async () => {
@@ -591,7 +593,13 @@ onMounted(async () => {
 
     <!-- Posts Grid -->
     <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <TuitionPost v-for="post in filteredPosts" :key="post.post_id" :post="post" />
+      <TuitionPost
+        v-for="post in filteredPosts"
+        :key="post.post_id"
+        :post="post"
+        @postUpdated="fetchTuitionPosts"
+        @postDeleted="handlePostDeleted"
+      />
     </div>
 
     <!-- Empty State -->

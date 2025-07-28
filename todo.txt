@@ -6,3 +6,5 @@ edit group info
 
 edit post
 removing one media from post edit modal removes all media
+add post delete
+
